@@ -3,7 +3,7 @@ import React from "react";
 
 import { Input } from "@/components/ui/input";
 import { cn, getTournamentData, updateMatchScore } from "@/lib/utils";
-import { MatchFixture, TournamentDataType } from "@/types/tournament.type";
+import { MatchFixture } from "@/types/tournament.type";
 import { toast } from "sonner";
 
 const Fixtures = ({
