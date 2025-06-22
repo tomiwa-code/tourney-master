@@ -102,7 +102,6 @@ const DynamicPageWrapper = ({ slug }: { slug: string }) => {
                           group={group}
                           slug={slug}
                           teams={teams}
-                          currentTournament={tournamentData}
                         />
                       );
                     }

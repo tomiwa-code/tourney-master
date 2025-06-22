@@ -10,12 +10,10 @@ const Fixtures = ({
   group,
   teams,
   slug,
-  currentTournament,
 }: {
   group: string;
   teams: MatchFixture[];
   slug: string;
-  currentTournament: TournamentDataType;
 }) => {
   const [matchResults, setMatchResults] = React.useState<{
     [key: string]: {
