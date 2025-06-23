@@ -28,21 +28,21 @@ const LandingPageWrapper = () => {
   }, []);
 
   return (
-    <div className="w-full min-h-screen flex items-center justify-center bg-white dark:bg-dark">
+    <div className="w-full min-h-screen flex items-center justify-center bg-white dark:bg-dark px-5 md:px-0">
       <div className="w-full flex-col max-w-3xl flex items-center justify-center min-h-32">
-        <div className="relative overflow-hidden size-44">
+        <div className="relative overflow-hidden size-32 md:size-44">
           <Image src={images.trophy} alt="trophy" width={1000} height={1000} />
         </div>
 
         <div className="mt-3 flex flex-col gap-y-1 items-center justify-center">
-          <p className="text-2xl font-medium capitalize text-white">
+          <p className="text-base md:text-2xl font-medium capitalize text-white">
             Welcome to,
           </p>
-          <h2 className="text-4xl uppercase font-semibold text-primary tracking-tighter">
+          <h2 className="text-xl md:text-4xl uppercase font-semibold text-primary tracking-tighter">
             tourney master
           </h2>
 
-          <p className="text-base font-normal text-center text-gray-500 dark:text-gray-300 mt-1">
+          <p className="text-sm md:text-base font-normal text-center text-gray-500 dark:text-gray-300 mt-1">
             Your ultimate tournament management tool
           </p>
         </div>
@@ -56,7 +56,7 @@ const LandingPageWrapper = () => {
                 duration: 0.4,
                 ease: "easeInOut",
               }}
-              className="flex items-center justify-center gap-x-5 mt-5"
+              className="flex-col md:flex-row gap-y-4 flex items-center justify-center gap-x-5 mt-5"
             >
               <Link href={"/create"}>
                 <Button className="capitalize bg-dark-300 h-12 px-5 hover:bg-dark-400 duration-300 text-white">
