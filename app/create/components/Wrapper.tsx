@@ -19,11 +19,16 @@ import {
   validatePlayerNames,
 } from "@/lib/validation";
 import {
-  distributePlayersToGroups,
+  distributePlayers,
   generateGroupFixtures,
   initializeStandings,
 } from "@/lib/utils";
 import { useRouter } from "next/navigation";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { DistributionMethod } from "@/types/tournament.type";
+
+const radioOptions = ["random", "custom"];
 
 const CreateWrapper = () => {
   const [formData, setFormData] = React.useState({
@@ -32,6 +37,9 @@ const CreateWrapper = () => {
     maxPlayers: "28",
     playersPerGroup: "7",
     playerNames: "",
+    playerInput: "",
+    qualifier: "4",
+    distribution: "random", // 'random' or 'custom'
   });
 
   const router = useRouter();
@@ -56,15 +64,23 @@ const CreateWrapper = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const { tournamentName, maxPlayers, playersPerGroup, playerNames } =
-      formData;
+    const {
+      tournamentName,
+      maxPlayers,
+      playersPerGroup,
+      playerNames,
+      distribution,
+      playerInput,
+    } = formData;
+
+    const isCustomDistribution = distribution === "custom";
 
     if (
       !createTournamentValidateInput({
         tournamentName,
         maxPlayers,
         playersPerGroup,
-        playerNames,
+        playerNames: isCustomDistribution ? playerInput : playerNames,
       })
     )
       return;
@@ -74,45 +90,63 @@ const CreateWrapper = () => {
       .map((name) => name.trim())
       .filter((name) => name);
 
-    if (!validatePlayerNames(playerNamesArray, Number(maxPlayers))) return;
+    const players = playerInput
+      .split(",")
+      .map((name) => name.trim())
+      .filter((name) => name.length > 0);
 
-    // 1. DISTRIBUTE PLAYERS INTO GROUPS
-    const groups = distributePlayersToGroups(
-      playerNamesArray,
-      Number(playersPerGroup)
-    );
+    if (!isCustomDistribution) {
+      if (!validatePlayerNames(playerNamesArray, Number(maxPlayers))) return;
+    }
 
-    // 2. GENERATE FIXTURES FOR EACH GROUP
-    const groupFixtures = generateGroupFixtures(groups);
+    if (isCustomDistribution) {
+      if (!validatePlayerNames(players, Number(maxPlayers))) return;
+    }
 
-    // 3. INITIALIZE STANDINGS FOR EACH GROUP
-    const groupStandings = initializeStandings(groups);
+    try {
+      const groups = distributePlayers(
+        isCustomDistribution ? players : playerNamesArray,
+        Number(playersPerGroup),
+        distribution as DistributionMethod,
+        isCustomDistribution ? playerInput : undefined
+      );
 
-    // Generate a unique slug
-    const slug = `${tournamentName
-      .trim()
-      .toLowerCase()
-      .replace(/\s+/g, "-")}-${Math.random().toString(36).substring(2, 8)}`;
+      // GENERATE FIXTURES FOR EACH GROUP
+      const groupFixtures = generateGroupFixtures(groups);
 
-    const tournamentData = {
-      slug,
-      name: tournamentName.trim(),
-      groups,
-      groupFixtures,
-      groupStandings,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      status: "group-stage", // can be 'group-stage', 'knockout', 'completed'
-    };
+      // INITIALIZE STANDINGS FOR EACH GROUP
+      const groupStandings = initializeStandings(groups);
 
-    // Save to localStorage
-    localStorage.setItem(
-      `tourney-master-${slug}`,
-      JSON.stringify(tournamentData)
-    );
+      // Generate a unique slug
+      const slug = `${tournamentName
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, "-")}-${Math.random().toString(36).substring(2, 8)}`;
 
-    toast.success("Tournament created successfully!");
-    router.push(`/tournament/${slug}`);
+      const tournamentData = {
+        slug,
+        name: tournamentName.trim(),
+        numOfQualifier: Number(formData.qualifier),
+        groups,
+        groupFixtures,
+        groupStandings,
+        distribution,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        status: "group-stage", // can be 'group-stage', 'knockout', 'completed'
+      };
+
+      // Save to localStorage
+      localStorage.setItem(
+        `tourney-master-${slug}`,
+        JSON.stringify(tournamentData)
+      );
+
+      toast.success("Tournament created successfully!");
+      router.push(`/tournament/${slug}`);
+    } catch (error) {
+      toast.error(`${error}`);
+    }
   };
 
   return (
@@ -173,16 +207,65 @@ const CreateWrapper = () => {
           </div>
         </div>
 
-        <div className="w-full flex flex-col gap-y-2">
-          <CreateLabel text="player names (separated by comma)" />
-          <Textarea
-            name="playerNames"
-            value={formData.playerNames}
-            onChange={handleChange}
-            className="resize-none h-44 border-dark-300 text-white placeholder:text-gray-300 px-5"
-            placeholder="John, Jane, Mike, Sarah..."
-          />
+        <div className="flex items-center gap-x-3 w-full">
+          <div className="flex-1 flex flex-col gap-y-2">
+            <CreateLabel text="number of qualifiers" />
+            <Input
+              name="qualifier"
+              value={formData.qualifier}
+              onChange={handleChange}
+              type="number"
+              min="2"
+              className="uppercase appearance-none border-dark-300 h-14 text-white placeholder:text-gray-300 px-5"
+            />
+          </div>
         </div>
+
+        <div className="flex flex-col gap-y-4 w-full ">
+          <CreateLabel text="player distribution" />
+          <RadioGroup
+            value={formData.distribution}
+            onValueChange={(value) =>
+              setFormData((prev) => ({ ...prev, distribution: value }))
+            }
+            className="flex items-center gap-x-4"
+          >
+            {radioOptions.map((option, idx) => (
+              <div className="flex items-center space-x-2" key={idx}>
+                <RadioGroupItem value={option} id={option} />
+                <Label htmlFor={option} className="text-gray-300 capitalize">
+                  {option}
+                </Label>
+              </div>
+            ))}
+          </RadioGroup>
+        </div>
+
+        {formData.distribution === "custom" && (
+          <div className="w-full flex flex-col gap-y-2">
+            <CreateLabel text="separate player names by comma, group by *" />
+            <Textarea
+              name="playerInput"
+              value={formData.playerInput}
+              onChange={handleChange}
+              className="resize-none h-44 border-dark-300 text-white placeholder:text-gray-300 px-5"
+              placeholder="John, Jane, Mike, * Sarah, Tom, Alex, * etc."
+            />
+          </div>
+        )}
+
+        {formData.distribution === "random" && (
+          <div className="w-full flex flex-col gap-y-2">
+            <CreateLabel text="player names (separated by comma)" />
+            <Textarea
+              name="playerNames"
+              value={formData.playerNames}
+              onChange={handleChange}
+              className="resize-none h-44 border-dark-300 text-white placeholder:text-gray-300 px-5"
+              placeholder="John, Jane, Mike, Sarah..."
+            />
+          </div>
+        )}
 
         <div className="flex items-center justify-center">
           <Button

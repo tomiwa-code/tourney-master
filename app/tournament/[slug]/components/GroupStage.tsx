@@ -18,7 +18,6 @@ interface GroupStageProps {
 }
 
 const tableHeadClass = "text-gray-300";
-const qualifier = 4;
 
 const GroupStage = ({ group, teams, tournamentData }: GroupStageProps) => {
   const getTeamStats = (group: string, teamName: string) => {
@@ -28,6 +27,8 @@ const GroupStage = ({ group, teams, tournamentData }: GroupStageProps) => {
 
     return findTeam;
   };
+
+  const qualifier = tournamentData?.numOfQualifier ?? 4;
 
   return (
     <div className="bg-dark-300 rounded-lg p-5 min-w-[200px] flex flex-col gap-y-3">
@@ -78,7 +79,7 @@ const GroupStage = ({ group, teams, tournamentData }: GroupStageProps) => {
                 <TableCell className="text-center">{ga ?? 0}</TableCell>
                 <TableCell className="text-center">{gd ?? 0}</TableCell>
                 <TableCell className="text-primary text-center font-medium">
-                  {pts}
+                  {pts ?? 0}
                 </TableCell>
               </TableRow>
             );

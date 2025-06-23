@@ -5,12 +5,16 @@ export type groupType = {
   D: string[];
 };
 
+export type DistributionMethod = "random" | "custom";
+
 export type TournamentDataType = {
   slug: string;
   name: string;
+  numOfQualifier: number;
   groups: groupType;
   groupFixtures: GroupFixtures;
   groupStandings: GroupStandings;
+  distribution: DistributionMethod;
   status: "group-stage" | "knockout" | "completed";
   createdAt: string;
   updatedAt: string;

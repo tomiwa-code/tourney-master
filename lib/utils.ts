@@ -1,4 +1,5 @@
 import {
+  DistributionMethod,
   GroupFixtures,
   GroupStandings,
   MatchFixture,
@@ -306,4 +307,64 @@ export const getTournamentData = (slug: string) => {
   }
 
   toast.error("Failed to load tournament data.");
+};
+
+export const distributePlayers = (
+  allPlayers: string[],
+  playersPerGroup: number,
+  method: DistributionMethod = "random",
+  customInput?: string
+): Record<string, string[]> => {
+  if (method === "custom" && customInput) {
+    return parseCustomDistribution(customInput, playersPerGroup);
+  }
+
+  // For random distribution, validate total player count
+  if (allPlayers.length % playersPerGroup !== 0) {
+    throw new Error(
+      `Total players (${allPlayers.length}) must be divisible by ${playersPerGroup}`
+    );
+  }
+
+  return distributePlayersToGroups(allPlayers, playersPerGroup);
+};
+
+const parseCustomDistribution = (
+  input: string,
+  playersPerGroup: number
+): Record<string, string[]> => {
+  const groups: Record<string, string[]> = {};
+  const groupStrings = input
+    .split("*")
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+
+  // Validate each group has correct number of players
+  for (let i = 0; i < groupStrings.length; i++) {
+    const players = groupStrings[i]
+      .split(",")
+      .map((name) => name.trim())
+      .filter((name) => name.length > 0);
+
+    if (players.length !== playersPerGroup) {
+      throw new Error(
+        `Group ${String.fromCharCode(
+          65 + i
+        )} should have exactly ${playersPerGroup} players, but has ${
+          players.length
+        }`
+      );
+    }
+  }
+
+  // Create groups if validation passed
+  groupStrings.forEach((groupStr, index) => {
+    const groupName = String.fromCharCode(65 + index); // A, B, C, etc.
+    groups[groupName] = groupStr
+      .split(",")
+      .map((name) => name.trim())
+      .filter((name) => name.length > 0);
+  });
+
+  return groups;
 };
