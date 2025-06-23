@@ -7,6 +7,7 @@ import { TournamentDataType } from "@/types/tournament.type";
 import GroupStage from "./GroupStage";
 import Link from "next/link";
 import Fixtures from "./Fixtures";
+import GoBack from "@/components/general/GoBack";
 
 const tabArr = ["groups", "fixtures", "knockout"];
 const DynamicPageWrapper = ({ slug }: { slug: string }) => {
@@ -28,6 +29,8 @@ const DynamicPageWrapper = ({ slug }: { slug: string }) => {
 
   return (
     <div className="w-full min-h-screen flex-col flex items-center justify-center bg-white dark:bg-dark pt-10 pb-20">
+      <GoBack />
+
       <div className="flex items-center justify-center gap-x-4 bg-dark-300 px-3 py-3 rounded-2xl">
         {tabArr.map((tab, idx) => (
           <Button

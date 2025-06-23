@@ -131,6 +131,8 @@ const CreateWrapper = () => {
         groupFixtures,
         groupStandings,
         distribution,
+        totalPlayer: maxPlayers,
+        playersPerGroup,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         status: "group-stage", // can be 'group-stage', 'knockout', 'completed'

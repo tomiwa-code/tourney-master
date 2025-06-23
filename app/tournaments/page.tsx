@@ -1,9 +1,8 @@
-import React from 'react'
+import React from "react";
+import TournamentsPageWrapper from "./components/Wrapper";
 
 const ListTournamentsPage = () => {
-  return (
-    <div>ListTournamentsPage</div>
-  )
-}
+  return <TournamentsPageWrapper />;
+};
 
-export default ListTournamentsPage
+export default ListTournamentsPage;

@@ -16,6 +16,8 @@ export type TournamentDataType = {
   groupStandings: GroupStandings;
   distribution: DistributionMethod;
   status: "group-stage" | "knockout" | "completed";
+  playersPerGroup: string;
+  totalPlayer: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -62,3 +64,5 @@ export interface UpdatedStandings {
   standings: GroupStandings;
   groups: Record<string, string[]>;
 }
+
+export type TournamentListType = Record<string, TournamentDataType>;

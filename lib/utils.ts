@@ -368,3 +368,49 @@ const parseCustomDistribution = (
 
   return groups;
 };
+
+export const getItemsStartingWith = <T = unknown>(
+  prefix: string
+): Record<string, T> => {
+  const matchedItems: Record<string, T> = {};
+
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+
+    if (key && key.startsWith(prefix)) {
+      const value = localStorage.getItem(key);
+      if (value !== null) {
+        try {
+          matchedItems[key] = JSON.parse(value) as T;
+        } catch (err) {
+          console.warn(`Failed to parse value for key "${key}": `, err);
+        }
+      }
+    }
+  }
+
+  return matchedItems;
+};
+
+export const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+};
+
+export const sortByDate = <
+  T extends { createdAt?: string; updatedAt?: string }
+>(
+  arr: T[],
+  key: "createdAt" | "updatedAt"
+): T[] => {
+  return arr.slice().sort((a, b) => {
+    const dateA = new Date(a[key] || "").getTime();
+    const dateB = new Date(b[key] || "").getTime();
+
+    return dateB - dateA;
+  });
+};
