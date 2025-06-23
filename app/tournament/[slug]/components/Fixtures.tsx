@@ -2,7 +2,12 @@
 import React from "react";
 
 import { Input } from "@/components/ui/input";
-import { cn, getTournamentData, updateMatchScore } from "@/lib/utils";
+import {
+  cn,
+  getTournamentData,
+  truncateText,
+  updateMatchScore,
+} from "@/lib/utils";
 import { MatchFixture } from "@/types/tournament.type";
 import { toast } from "sonner";
 
@@ -123,7 +128,7 @@ const Fixtures = ({
 
   return (
     <div className="flex flex-col gap-y-5" key={group}>
-      <h2 className="uppercase text-xl font-semibold text-white">
+      <h2 className="uppercase text-xl text-center lg:text-left font-semibold text-white">
         group {group}
       </h2>
 
@@ -186,13 +191,15 @@ const FixtureCard = ({
 }) => {
   return (
     <div className={cn("flex items-center gap-x-2", className)}>
-      <div className="min-w-[180px] h-8 flex items-center justify-center bg-white">
-        <p className="text-dark font-extrabold text-sm">{team}</p>
+      <div className="px-10 md:px-0 truncate w-[110px] md:min-w-[180px] h-8 flex items-center justify-center bg-white">
+        <p className="text-dark font-extrabold text-sm">
+          {truncateText(team, 8)}
+        </p>
       </div>
 
       <Input
         type="number"
-        className="text-red font-extrabold text-center focus:bg-white border-0 outline-0 ring-0 focus:outline-0 !text-2xl px-0 rounded-none w-10 h-8 flex items-center justify-center bg-primary"
+        className="text-red font-extrabold text-center focus:bg-white border-0 outline-0 ring-0 focus:outline-0 !text-2xl px-0 rounded-none w-8 md:w-10 h-8 flex items-center justify-center bg-primary"
         value={score !== null ? score : ""}
         onChange={(e) => onScoreChange(e, groupName, matchIndex, isHome)}
       />

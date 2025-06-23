@@ -9,7 +9,7 @@ const GoBack = () => {
   const router = useRouter();
 
   return (
-    <div className="fixed top-10 left-20">
+    <div className="absolute md:fixed top-8 md:top-10 left-5 md:left-20">
       <Button
         variant={"outline"}
         className="bg-transparent text-white"

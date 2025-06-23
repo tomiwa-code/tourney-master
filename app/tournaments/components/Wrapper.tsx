@@ -67,13 +67,13 @@ const TournamentsPageWrapper = () => {
   }, []);
 
   return (
-    <div className="w-full min-h-screen flex-col flex items-center justify-center bg-white dark:bg-dark">
+    <div className="w-full min-h-screen flex-col flex items-center justify-center bg-white dark:bg-dark px-5 md:px-10 lg:px-0">
       <GoBack />
 
       <TourneyMasterLogo />
 
       <div className="relative mt-10">
-        <h2 className="text-white text-lg font-semibold uppercase">
+        <h2 className="text-white text-base md:text-lg font-medium md:font-semibold uppercase">
           List of all tournaments
         </h2>
       </div>

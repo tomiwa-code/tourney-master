@@ -27,6 +27,7 @@ import { useRouter } from "next/navigation";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { DistributionMethod } from "@/types/tournament.type";
+import GoBack from "@/components/general/GoBack";
 
 const radioOptions = ["random", "custom"];
 
@@ -152,12 +153,13 @@ const CreateWrapper = () => {
   };
 
   return (
-    <div className="w-full min-h-screen flex-col flex items-center justify-center bg-white dark:bg-dark">
+    <div className="w-full min-h-screen flex-col flex items-center justify-center bg-white dark:bg-dark pt-20 md:pt-10 pb-20">
+      <GoBack />
       <TourneyMasterLogo />
 
       <form
         onSubmit={handleSubmit}
-        className="w-full mt-8 flex-col max-w-xl gap-y-6 flex items-center justify-center min-h-32"
+        className="w-full px-5 md:px-0 mt-8 flex-col max-w-xl gap-y-6 flex items-center justify-center min-h-32"
       >
         <div className="w-full flex flex-col gap-y-2">
           <CreateLabel text="tournament name" />
@@ -165,7 +167,7 @@ const CreateWrapper = () => {
             name="tournamentName"
             value={formData.tournamentName}
             onChange={handleChange}
-            className="uppercase border-dark-300 h-14 text-white placeholder:text-gray-300 px-5 font-medium !text-lg"
+            className="uppercase border-dark-300 h-12 md:h-14 text-white placeholder:text-gray-300 px-5 font-medium text-base md:!text-lg"
             placeholder="tournament name"
           />
         </div>
@@ -173,7 +175,7 @@ const CreateWrapper = () => {
         <div className="w-full flex flex-col gap-y-2">
           <CreateLabel text="pick a game type" />
           <Select value={formData.gameType} onValueChange={handleSelectChange}>
-            <SelectTrigger className="w-full capitalize border-dark-300 !h-14 text-white placeholder:text-gray-300 px-5">
+            <SelectTrigger className="w-full capitalize border-dark-300 !h-12 md:!h-14 text-white placeholder:text-gray-300 px-5">
               <SelectValue placeholder="Game Type" />
             </SelectTrigger>
             <SelectContent className="bg-dark-300 text-white border-0">
@@ -183,8 +185,8 @@ const CreateWrapper = () => {
           </Select>
         </div>
 
-        <div className="flex items-center gap-x-3 w-full">
-          <div className="flex-1 flex flex-col gap-y-2">
+        <div className="flex-col gap-y-6 md:flex-row flex items-center gap-x-3 w-full">
+          <div className="w-full md:flex-1 flex flex-col gap-y-2">
             <CreateLabel text="max players" />
             <Input
               name="maxPlayers"
@@ -192,11 +194,11 @@ const CreateWrapper = () => {
               onChange={handleChange}
               type="number"
               min="2"
-              className="uppercase appearance-none border-dark-300 h-14 text-white placeholder:text-gray-300 px-5"
+              className="uppercase appearance-none border-dark-300 h-12 md:h-14 text-white placeholder:text-gray-300 px-5"
             />
           </div>
 
-          <div className="flex-1 flex flex-col gap-y-2">
+          <div className="w-full md:flex-1 flex flex-col gap-y-2">
             <CreateLabel text="players per group" />
             <Input
               name="playersPerGroup"
@@ -204,7 +206,7 @@ const CreateWrapper = () => {
               onChange={handleChange}
               type="number"
               min="2"
-              className="uppercase appearance-none border-dark-300 h-14 text-white placeholder:text-gray-300 px-5"
+              className="uppercase appearance-none border-dark-300 h-12 md:h-14 text-white placeholder:text-gray-300 px-5"
             />
           </div>
         </div>
@@ -218,7 +220,7 @@ const CreateWrapper = () => {
               onChange={handleChange}
               type="number"
               min="2"
-              className="uppercase appearance-none border-dark-300 h-14 text-white placeholder:text-gray-300 px-5"
+              className="uppercase appearance-none border-dark-300 h-12 md:h-14 text-white placeholder:text-gray-300 px-5"
             />
           </div>
         </div>
@@ -250,7 +252,7 @@ const CreateWrapper = () => {
               name="playerInput"
               value={formData.playerInput}
               onChange={handleChange}
-              className="resize-none h-44 border-dark-300 text-white placeholder:text-gray-300 px-5"
+              className="resize-none h-44 border-dark-300 text-white placeholder:text-gray-300 px-5 text-sm"
               placeholder="John, Jane, Mike, * Sarah, Tom, Alex, * etc."
             />
           </div>

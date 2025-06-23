@@ -28,7 +28,7 @@ const DynamicPageWrapper = ({ slug }: { slug: string }) => {
   }, [slug, activeTab]);
 
   return (
-    <div className="w-full min-h-screen flex-col flex items-center justify-center bg-white dark:bg-dark pt-10 pb-20">
+    <div className="w-full min-h-screen flex-col flex items-center justify-center bg-white dark:bg-dark pt-20 md:pt-10 pb-20 px-5 md:px-10 lg:px-0">
       <GoBack />
 
       <div className="flex items-center justify-center gap-x-4 bg-dark-300 px-3 py-3 rounded-2xl">
@@ -53,7 +53,7 @@ const DynamicPageWrapper = ({ slug }: { slug: string }) => {
         </div>
       ) : !tournamentData ? (
         <div className="w-full max-w-sm h-[300px] flex items-center justify-center flex-col gap-y-3 mt-10">
-          <h2 className="text-white text-2xl font-semibold">
+          <h2 className="text-white text-xl md:text-2xl font-semibold">
             Tournament not found.
           </h2>
 
@@ -71,7 +71,7 @@ const DynamicPageWrapper = ({ slug }: { slug: string }) => {
       ) : (
         tournamentData && (
           <div className="flex items-center flex-col justify-center mt-10">
-            <h2 className="text-white text-2xl font-semibold uppercase">
+            <h2 className="text-white text-center text-lg md:text-2xl font-semibold uppercase">
               {tournamentData.name} {activeTab === "groups" && "group stage"}{" "}
               tournament {activeTab === "fixtures" && "fixtures"}{" "}
               {activeTab === "knockout" && "knockout stage"}
@@ -79,7 +79,7 @@ const DynamicPageWrapper = ({ slug }: { slug: string }) => {
 
             <div className="mt-14">
               {activeTab === "groups" && (
-                <div className="grid gap-y-10 grid-cols-2 gap-x-10">
+                <div className="grid gap-y-10 lg:grid-cols-2 gap-x-10">
                   {Object.entries(tournamentData.groups).map(
                     ([group, teams]) => {
                       return (
@@ -96,7 +96,7 @@ const DynamicPageWrapper = ({ slug }: { slug: string }) => {
               )}
 
               {activeTab === "fixtures" && (
-                <div className="grid gap-y-10 grid-cols-2 gap-x-16">
+                <div className="grid gap-y-10 lg:grid-cols-2 gap-x-16">
                   {Object.entries(tournamentData.groupFixtures).map(
                     ([group, teams]) => {
                       return (
