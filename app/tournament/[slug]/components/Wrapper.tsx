@@ -2,12 +2,23 @@
 import React from "react";
 
 import { Button } from "@/components/ui/button";
-import { cn, getTournamentData } from "@/lib/utils";
-import { TournamentDataType } from "@/types/tournament.type";
+import {
+  checkGroupStageCompletion,
+  cn,
+  drawKnockoutRound,
+  getQualifiers,
+  getTournamentData,
+} from "@/lib/utils";
+import {
+  CheckGroupStageCompletionRes,
+  TournamentDataType,
+} from "@/types/tournament.type";
 import GroupStage from "./GroupStage";
 import Link from "next/link";
 import Fixtures from "./Fixtures";
 import GoBack from "@/components/general/GoBack";
+import KnockoutStage from "./KnockoutStage";
+import { toast } from "sonner";
 
 const tabArr = ["groups", "fixtures", "knockout"];
 const DynamicPageWrapper = ({ slug }: { slug: string }) => {
@@ -15,6 +26,71 @@ const DynamicPageWrapper = ({ slug }: { slug: string }) => {
   const [tournamentData, setTournamentData] =
     React.useState<TournamentDataType | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
+
+  const completionStatus: CheckGroupStageCompletionRes = React.useMemo(() => {
+    if (!tournamentData)
+      return {
+        allCompleted: false,
+        incompleteGroups: [],
+        incompleteMatches: [],
+      };
+
+    return checkGroupStageCompletion(tournamentData);
+  }, [tournamentData]);
+
+  const generateKnockout = React.useCallback(() => {
+    if (!tournamentData) {
+      toast.error("Tournament data not found");
+      return;
+    }
+
+    if (!completionStatus.allCompleted) {
+      toast.error("Not all group matches are completed");
+      return;
+    }
+
+    if (tournamentData.status !== "group-stage") {
+      toast.error("Tournament is not in group stage");
+      return;
+    }
+
+    const qualifiers = getQualifiers(
+      tournamentData.groupStandings,
+      tournamentData.numOfQualifier
+    );
+
+    const knockoutDrawn = drawKnockoutRound(qualifiers);
+
+    if (!knockoutDrawn) {
+      toast.error("Failed to draw knockout round");
+      return;
+    }
+
+    if (knockoutDrawn.length === 0) {
+      toast.error("No matches drawn for knockout round");
+      return;
+    }
+
+    const updatedTournamentData: TournamentDataType = {
+      ...tournamentData,
+      knockoutStages: {
+        roundOf16: knockoutDrawn,
+        quarterFinals: [],
+        semiFinals: [],
+        finals: [],
+      },
+      status: "knockout",
+      knockoutDrawn: true,
+    };
+
+    localStorage.setItem(
+      `tourney-master-${slug}`,
+      JSON.stringify(updatedTournamentData)
+    );
+
+    toast.success("Knockout round drawn successfully");
+    setActiveTab("knockout");
+  }, [tournamentData]);
 
   React.useEffect(() => {
     const tournamentData = getTournamentData(slug);
@@ -79,20 +155,50 @@ const DynamicPageWrapper = ({ slug }: { slug: string }) => {
 
             <div className="mt-14">
               {activeTab === "groups" && (
-                <div className="grid gap-y-10 lg:grid-cols-2 gap-x-10">
-                  {Object.entries(tournamentData.groups).map(
-                    ([group, teams]) => {
-                      return (
-                        <GroupStage
-                          key={group}
-                          group={group}
-                          teams={teams}
-                          tournamentData={tournamentData}
-                        />
-                      );
-                    }
+                <>
+                  <div className="grid gap-y-10 lg:grid-cols-2 gap-x-10">
+                    {Object.entries(tournamentData.groups).map(
+                      ([group, teams]) => {
+                        return (
+                          <GroupStage
+                            key={group}
+                            group={group}
+                            teams={teams}
+                            tournamentData={tournamentData}
+                          />
+                        );
+                      }
+                    )}
+                  </div>
+
+                  {completionStatus.allCompleted &&
+                    !tournamentData.knockoutDrawn && (
+                      <div className="w-full flex items-center justify-center mt-10">
+                        <Button
+                          onClick={generateKnockout}
+                          className="capitalize bg-dark-300 h-12 px-5 hover:bg-dark-400 duration-300 text-white font-medium"
+                        >
+                          draw knockout
+                        </Button>
+                      </div>
+                    )}
+
+                  {!completionStatus.allCompleted && (
+                    <div className="w-full max-w-xl mx-auto mt-10">
+                      <p className="text-red-500 text-center mt-5">
+                        Some groups are not completed yet. Please wait for all
+                        matches to be played before proceeding to the knockout
+                        stage.
+                      </p>
+                      {completionStatus.incompleteGroups.length > 0 && (
+                        <p className="text-gray-400 text-center mt-2">
+                          Incomplete Groups:{" "}
+                          {completionStatus.incompleteGroups.join(", ")}
+                        </p>
+                      )}
+                    </div>
                   )}
-                </div>
+                </>
               )}
 
               {activeTab === "fixtures" && (
@@ -111,6 +217,8 @@ const DynamicPageWrapper = ({ slug }: { slug: string }) => {
                   )}
                 </div>
               )}
+
+              {activeTab === "knockout" && <KnockoutStage />}
             </div>
           </div>
         )

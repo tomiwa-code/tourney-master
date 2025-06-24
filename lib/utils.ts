@@ -1,10 +1,13 @@
 import {
+  CheckGroupStageCompletionRes,
   DistributionMethod,
   GroupFixtures,
   GroupStandings,
+  KnockoutMatch,
   MatchFixture,
   PlayerMatchRecord,
   PlayerStats,
+  Qualifier,
   TournamentDataType,
   UpdatedStandings,
 } from "@/types/tournament.type";
@@ -418,4 +421,145 @@ export const sortByDate = <
 export const truncateText = (text: string, limit: number) => {
   if (text.length <= limit) return text;
   return text.slice(0, limit) + "...";
+};
+
+export const checkGroupStageCompletion = (
+  tournament: TournamentDataType
+): CheckGroupStageCompletionRes => {
+  const result = {
+    allCompleted: true,
+    incompleteGroups: [] as string[],
+    incompleteMatches: [] as Array<{
+      group: string;
+      match: number;
+      players: [string, string];
+    }>,
+  };
+
+  Object.entries(tournament.groupFixtures).forEach(([groupName, fixtures]) => {
+    fixtures.forEach((match, matchIndex) => {
+      if (!match.result?.completed) {
+        result.allCompleted = false;
+        if (!result.incompleteGroups.includes(groupName)) {
+          result.incompleteGroups.push(groupName);
+        }
+        result.incompleteMatches.push({
+          group: groupName,
+          match: matchIndex,
+          players: match.players,
+        });
+      }
+    });
+  });
+
+  return result;
+};
+
+export const validateTournamentSetup = (
+  groupStandings: GroupStandings,
+  qualifiersPerGroup: number
+): { isValid: boolean; message?: string } => {
+  const groupCount = Object.keys(groupStandings).length;
+  const totalQualifiers = groupCount * qualifiersPerGroup;
+
+  // Check if total qualifiers make a valid knockout bracket (16 or 32)
+  if (totalQualifiers !== 16 && totalQualifiers !== 32) {
+    return {
+      isValid: false,
+      message: `With ${groupCount} groups and ${qualifiersPerGroup} qualifiers per group, you get ${totalQualifiers} total qualifiers. 
+      Knockout stages require exactly 16 or 32 teams. Please adjust your group/qualifier numbers.`,
+    };
+  }
+
+  return { isValid: true };
+};
+
+export const drawKnockoutRound = (qualifiers: Qualifier[]): KnockoutMatch[] => {
+  const totalQualifiers = qualifiers.length;
+  const isRoundOf32 = totalQualifiers === 32;
+  const roundName = isRoundOf32 ? "Round of 32" : "Round of 16";
+
+  // Separate qualifiers by their position
+  const groupWinners = qualifiers.filter((q) => q.position === 1);
+  const runnersUp = qualifiers.filter((q) => q.position === 2);
+
+  // Sort by performance (best to worst)
+  const sortTeams = (teams: Qualifier[]) =>
+    [...teams].sort((a, b) => b.pts - a.pts || b.gd - a.gd || b.gf - a.gf);
+  const sortedWinners = sortTeams(groupWinners);
+  const sortedRunnersUp = sortTeams(runnersUp);
+
+  const matches: KnockoutMatch[] = [];
+
+  // Create working copies to avoid mutating the sorted arrays
+  const availableWinners = [...sortedWinners];
+  const availableRunnersUp = [...sortedRunnersUp].reverse(); // Reverse for easier indexing
+
+  // Real-world Champions League drawing rules:
+  // 1. Group winners (seeded) vs runners-up (unseeded)
+  // 2. Teams from same group cannot face each other
+  // 3. Random draw within constraints (no performance-based seeding)
+
+  // Shuffle runners-up for random draw effect
+  const shuffledRunnersUp = [...availableRunnersUp].sort(
+    () => Math.random() - 0.5
+  );
+
+  for (let i = 0; i < availableWinners.length; i++) {
+    const homeTeam = availableWinners[i];
+
+    // Find the first available runner-up that's not from the same group
+    let awayTeamIndex = shuffledRunnersUp.findIndex(
+      (runnerUp) => runnerUp && runnerUp.group !== homeTeam.group
+    );
+
+    // If no valid opponent found, something is wrong with the tournament setup
+    if (awayTeamIndex === -1) {
+      console.warn(
+        `No valid opponent found for ${homeTeam.player} from group ${homeTeam.group}`
+      );
+      awayTeamIndex = 0; // Fallback to first available
+    }
+
+    const awayTeam = shuffledRunnersUp[awayTeamIndex];
+
+    // Remove the selected runner-up from available pool
+    shuffledRunnersUp.splice(awayTeamIndex, 1);
+
+    matches.push({
+      id: `${roundName.toLowerCase().replaceAll(" ", "-")}-${i + 1}`,
+      round: roundName,
+      home: homeTeam.player,
+      away: awayTeam.player,
+      homeScore: null,
+      awayScore: null,
+      completed: false,
+    });
+  }
+
+  return matches;
+};
+
+export const getQualifiers = (
+  groupStandings: GroupStandings,
+  qualifiersPerGroup: number
+): Qualifier[] => {
+  return Object.entries(groupStandings).flatMap(([group, players]) =>
+    players
+      .sort(
+        (a, b) =>
+          (b.pts ?? 0) - (a.pts ?? 0) ||
+          (b.gd ?? 0) - (a.gd ?? 0) ||
+          (b.gf ?? 0) - (a.gf ?? 0)
+      )
+      .slice(0, qualifiersPerGroup)
+      .map((player, index) => ({
+        player: player.player,
+        group,
+        position: index + 1,
+        pts: player.pts ?? 0,
+        gd: player.gd ?? 0,
+        gf: player.gf ?? 0,
+      }))
+  );
 };

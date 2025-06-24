@@ -1,15 +1,10 @@
 "use client";
 import React from "react";
 
-import { Input } from "@/components/ui/input";
-import {
-  cn,
-  getTournamentData,
-  truncateText,
-  updateMatchScore,
-} from "@/lib/utils";
+import { getTournamentData, updateMatchScore } from "@/lib/utils";
 import { MatchFixture } from "@/types/tournament.type";
 import { toast } from "sonner";
+import FixtureCard from "./FixtureCard";
 
 const Fixtures = ({
   group,
@@ -108,7 +103,6 @@ const Fixtures = ({
     setMatchResults(initialResults);
   }, [group, teams]);
 
-  //   Loop through the match results and check for any games from any group that has both home and away scores set and it's id exists inside isEditing, submit such score and remove the id from isEditing
   React.useEffect(() => {
     Object.entries(matchResults).forEach(([key, result]) => {
       if (
@@ -166,43 +160,3 @@ const Fixtures = ({
 };
 
 export default Fixtures;
-
-const FixtureCard = ({
-  team,
-  score,
-  className,
-  onScoreChange,
-  isHome = false,
-  groupName,
-  matchIndex,
-}: {
-  groupName: string;
-  matchIndex: number;
-  team: string;
-  score: number | null;
-  isHome?: boolean;
-  className?: string;
-  onScoreChange: (
-    e: React.ChangeEvent<HTMLInputElement>,
-    groupName: string,
-    matchIndex: number,
-    isHome: boolean
-  ) => void;
-}) => {
-  return (
-    <div className={cn("flex items-center gap-x-2", className)}>
-      <div className="px-10 md:px-0 truncate w-[110px] md:min-w-[180px] h-8 flex items-center justify-center bg-white">
-        <p className="text-dark font-extrabold text-sm">
-          {truncateText(team, 8)}
-        </p>
-      </div>
-
-      <Input
-        type="number"
-        className="text-red font-extrabold text-center focus:bg-white border-0 outline-0 ring-0 focus:outline-0 !text-2xl px-0 rounded-none w-8 md:w-10 h-8 flex items-center justify-center bg-primary"
-        value={score !== null ? score : ""}
-        onChange={(e) => onScoreChange(e, groupName, matchIndex, isHome)}
-      />
-    </div>
-  );
-};

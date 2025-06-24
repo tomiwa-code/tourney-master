@@ -22,6 +22,7 @@ import {
   distributePlayers,
   generateGroupFixtures,
   initializeStandings,
+  validateTournamentSetup,
 } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { Label } from "@/components/ui/label";
@@ -72,6 +73,7 @@ const CreateWrapper = () => {
       playerNames,
       distribution,
       playerInput,
+      qualifier,
     } = formData;
 
     const isCustomDistribution = distribution === "custom";
@@ -117,6 +119,19 @@ const CreateWrapper = () => {
 
       // INITIALIZE STANDINGS FOR EACH GROUP
       const groupStandings = initializeStandings(groups);
+
+      // VALIDATE TOURNAMENT SETUP
+      const isValidSetup = validateTournamentSetup(
+        groupStandings,
+        Number(qualifier)
+      );
+
+      if (!isValidSetup.isValid) {
+        toast.error(isValidSetup.message || "Invalid tournament setup", {
+          duration: 8000,
+        });
+        return;
+      }
 
       // Generate a unique slug
       const slug = `${tournamentName

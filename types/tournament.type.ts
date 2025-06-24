@@ -7,6 +7,14 @@ export type groupType = {
 
 export type DistributionMethod = "random" | "custom";
 
+export type KnockoutStages = {
+  roundOf32?: KnockoutMatch[];
+  roundOf16: KnockoutMatch[];
+  quarterFinals: KnockoutMatch[];
+  semiFinals: KnockoutMatch[];
+  finals: KnockoutMatch[];
+};
+
 export type TournamentDataType = {
   slug: string;
   name: string;
@@ -18,6 +26,8 @@ export type TournamentDataType = {
   status: "group-stage" | "knockout" | "completed";
   playersPerGroup: string;
   totalPlayer: string;
+  knockoutStages: KnockoutStages;
+  knockoutDrawn: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -66,3 +76,33 @@ export interface UpdatedStandings {
 }
 
 export type TournamentListType = Record<string, TournamentDataType>;
+
+export type CheckGroupStageCompletionRes = {
+  allCompleted: boolean;
+  incompleteGroups: string[];
+  incompleteMatches: Array<{
+    group: string;
+    match: number;
+    players: [string, string];
+  }>;
+};
+
+export interface KnockoutMatch {
+  id: string;
+  round: string;
+  home: string | null;
+  away: string | null;
+  homeScore?: number[] | null;
+  awayScore?: number[] | null;
+  winner?: string | null;
+  completed: boolean;
+}
+
+export interface Qualifier {
+  player: string;
+  group: string;
+  position: number;
+  pts: number;
+  gd: number;
+  gf: number;
+}

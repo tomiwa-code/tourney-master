@@ -78,7 +78,7 @@ const TournamentsPageWrapper = () => {
         </h2>
       </div>
 
-      <div className="mt-10 py-5 px-6 w-full max-w-5xl min-h-[450px] bg-dark-300 rounded-2xl">
+      <div className="mt-10 py-5 px-6 w-full max-w-5xl h-[475px] bg-dark-300 rounded-2xl">
         <TableList
           tournaments={tournaments}
           startIdx={itemsPerPage * (page - 1)}

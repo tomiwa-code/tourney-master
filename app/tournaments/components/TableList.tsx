@@ -13,6 +13,11 @@ import { TournamentDataType } from "@/types/tournament.type";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const tableHeadClass = "text-gray-300";
 const cellStyle = "capitalize h-14";
@@ -85,13 +90,33 @@ const TableList = ({ tournaments, startIdx }: TableListProps) => {
                 {playersPerGroup ?? "null"}
               </TableCell>
               <TableCell className={`${cellStyle} flex items-center gap-x-2`}>
-                <Button className="bg-white text-dark rounded-lg" size={"icon"}>
-                  <Pencil />
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      className="bg-white text-dark rounded-lg hover:bg-white"
+                      size={"icon"}
+                    >
+                      <Pencil />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Edit tournament</p>
+                  </TooltipContent>
+                </Tooltip>
 
-                <Button className="bg-red text-white rounded-lg" size={"icon"}>
-                  <Trash />
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      className="bg-red text-white rounded-lg hover:bg-red"
+                      size={"icon"}
+                    >
+                      <Trash />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Delete tournament</p>
+                  </TooltipContent>
+                </Tooltip>
               </TableCell>
             </TableRow>
           );

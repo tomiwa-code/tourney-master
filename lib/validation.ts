@@ -51,13 +51,18 @@ export const validatePlayerNames = (
   }
 
   if (playerNames.length > Number(maxPlayers)) {
-    toast.error("Number of player names cannot exceed max players");
+    toast.error(
+      `Number of player names cannot exceed max players (${maxPlayers}) and you have provided ${playerNames.length} names.`
+    );
     return false;
   }
 
   if (maxPlayers && playerNames.length < Number(maxPlayers)) {
     toast.error(
-      `You have provided ${playerNames.length} player names, but the max players is set to ${maxPlayers}. Please add more player names or adjust the max players.`
+      `You have provided ${playerNames.length} player names, but the max players is set to ${maxPlayers}. Please add more player names or adjust the max players.`,
+      {
+        duration: 8000,
+      }
     );
     return false;
   }
