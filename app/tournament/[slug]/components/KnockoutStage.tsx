@@ -1,220 +1,291 @@
+"use client";
+import { cn, getTournamentData, updateMatchInStorage } from "@/lib/utils";
+import {
+  KnockoutMatch,
+  KnockoutStages,
+  MatchResultsType,
+  RoundsType,
+  TournamentDataType,
+} from "@/types/tournament.type";
 import React from "react";
-import FixtureCard from "./FixtureCard";
-import Image from "next/image";
-import images from "@/constants/images";
+import DsFixtureCard from "./FixtureCard";
+import { toast } from "sonner";
+import BracketConnections from "./BracketConnections";
 
-const data = [
-  {
-    playerOne: "TINO",
-    playerTwo: "Mattys",
-    home: [1, 2],
-    away: [0, 1],
-  },
-  {
-    playerOne: "NúmeroCinco",
-    playerTwo: "OMALE",
-    home: [1, 2],
-    away: [0, 1],
-  },
-  {
-    playerOne: "LuthaKingJnr",
-    playerTwo: "Ultimate Tee",
-    home: [1, 2],
-    away: [0, 3],
-  },
-  {
-    playerOne: "UltraDre",
-    playerTwo: "LUHYAN-TOP-DAWG",
-    home: [1, 2],
-    away: [0, 1],
-  },
-  {
-    playerOne: "TINO",
-    playerTwo: "Mattys",
-    home: [1, 2],
-    away: [1, 1],
-  },
-  {
-    playerOne: "NúmeroCinco",
-    playerTwo: "OMALE",
-    home: [1, 2],
-    away: [0, 1],
-  },
-  {
-    playerOne: "LuthaKingJnr",
-    playerTwo: "Ultimate Tee",
-    home: [1, 2],
-    away: [0, 1],
-  },
-  {
-    playerOne: "UltraDre",
-    playerTwo: "Split22",
-    home: [1, 2],
-    away: [0, 1],
-  },
-];
-const roundsOf16 = [...data];
+interface KnockoutStageProps {
+  knockoutStages: KnockoutStages;
+  slug: string;
+  tournamentData: TournamentDataType;
+  setTournamentData: React.Dispatch<
+    React.SetStateAction<TournamentDataType | null>
+  >;
+}
+const commonItem = {
+  home: "",
+  away: "",
+  id: "",
+  round: "",
+  completed: false,
+};
 
-const KnockoutStage = () => {
-  const isRoundOf16 = roundsOf16.length === 8;
+const KnockoutStage = ({
+  knockoutStages,
+  slug,
+  setTournamentData,
+  tournamentData,
+}: KnockoutStageProps) => {
+  const [matchResults, setMatchResults] = React.useState<MatchResultsType>({});
+  const [editingMatchId, setEditingMatchId] = React.useState<{
+    matchId: string;
+    legStatus: "first" | "second";
+  } | null>(null);
+
+  // Check if the initial round is 32 or 16
+  const isRoundOf16 = tournamentData.knockoutStages.roundOf32 ? false : true;
+
+  // Extract rounds from knockout stages
+  const { roundOf32, roundOf16, finals } = knockoutStages;
+
+  // Check if final is played
+  const tournamentWinner =
+    finals !== undefined && finals[0]?.winner ? finals[0].winner : "";
+  const disableScoreInput = tournamentWinner !== "" ? true : false;
+
+  // Determine initial round based on props
+  const initialRound = React.useMemo(() => {
+    return isRoundOf16 ? roundOf16 : roundOf32 || [];
+  }, [isRoundOf16, roundOf16, roundOf32]);
+
+  // Handle score changes
+  const handleScoreChange = React.useCallback(
+    (
+      e: React.ChangeEvent<HTMLInputElement>,
+      matchId: string,
+      isHome: boolean,
+      leg: "first" | "second"
+    ) => {
+      if (!matchId) return;
+      const { value } = e.target;
+      const score = value === "" ? null : Math.max(0, parseInt(value, 10));
+
+      setEditingMatchId({
+        matchId,
+        legStatus: leg,
+      });
+
+      setMatchResults((prev) => {
+        const currentMatch = prev[matchId] || {
+          homeScore: [null, null],
+          awayScore: [null, null],
+        };
+
+        const legIndex = leg === "first" ? 0 : 1;
+        const scoreType = isHome ? "homeScore" : "awayScore";
+
+        return {
+          ...prev,
+          [matchId]: {
+            ...currentMatch,
+            [scoreType]: currentMatch[scoreType].map((s, idx) =>
+              idx === legIndex ? score : s
+            ),
+          },
+        };
+      });
+    },
+    []
+  );
+
+  // Save match results when editing is complete
+  const saveMatchResults = React.useCallback(() => {
+    if (!editingMatchId) return;
+
+    const match = matchResults[editingMatchId.matchId];
+    if (!match) return;
+
+    const splitId = editingMatchId.matchId.split("-");
+    const roundKey = splitId.includes("16")
+      ? "roundOf16"
+      : splitId.includes("32")
+      ? "roundOf32"
+      : splitId.includes("Quarter")
+      ? "quarterFinals"
+      : splitId.includes("Semi")
+      ? "semiFinals"
+      : "finals";
+
+    // Check if First leg scores are complete
+    const isFirstLegComplete =
+      match.homeScore[0] !== null && match.awayScore[0] !== null;
+    const isSecondLegComplete =
+      match.homeScore[1] !== null && match.awayScore[1] !== null;
+
+    if (editingMatchId.legStatus === "first" && isFirstLegComplete) {
+      try {
+        // Update storage
+        const updatedTournament = updateMatchInStorage({
+          matchId: editingMatchId.matchId,
+          roundKey: roundKey as RoundsType,
+          slug,
+          firstLeg: [
+            match.homeScore[0] !== null ? match.homeScore[0] : 0,
+            match.awayScore[0] !== null ? match.awayScore[0] : 0,
+          ],
+        });
+
+        if (updatedTournament) {
+          setTournamentData(updatedTournament);
+        }
+
+        setEditingMatchId(null);
+        toast.success("First leg match results saved!");
+      } catch (error) {
+        toast.error(
+          `Failed to save first leg match result: ${
+            error instanceof Error ? error.message : error
+          }`
+        );
+      }
+
+      return;
+    }
+
+    if (editingMatchId.legStatus === "second" && isSecondLegComplete) {
+      try {
+        // Update storage
+        const updatedTournament = updateMatchInStorage({
+          matchId: editingMatchId.matchId,
+          roundKey: roundKey as RoundsType,
+          slug,
+          secondLeg: [
+            match.homeScore[1] !== null ? match.homeScore[1] : 0,
+            match.awayScore[1] !== null ? match.awayScore[1] : 0,
+          ],
+        });
+
+        if (updatedTournament) {
+          setTournamentData(updatedTournament);
+        }
+        setEditingMatchId(null);
+        toast.success("Second leg match results saved!");
+      } catch (error) {
+        toast.error(
+          `Failed to save second leg match result: ${
+            error instanceof Error ? error.message : error
+          }`
+        );
+      }
+
+      return;
+    }
+  }, [editingMatchId, matchResults, isRoundOf16, slug, setTournamentData]);
+
+  // Get winner of a match based on round and match ID
+  const getWinner = React.useCallback(
+    (round: RoundsType, matchId: string): KnockoutMatch => {
+      const knockoutData = tournamentData.knockoutStages[round];
+      return knockoutData?.find((m) => m.id === matchId) ?? { ...commonItem };
+    },
+    [tournamentData]
+  );
+
+  // Load match results from localStorage
+  const loadMatchResults = React.useCallback(() => {
+    const currentTournament = getTournamentData(slug);
+    if (!currentTournament) return;
+
+    const knockoutData = currentTournament.knockoutStages;
+    if (!knockoutData) return;
+
+    const results: MatchResultsType = {};
+
+    const roundOf32Matches = knockoutData.roundOf32 || [];
+    const roundOf16Matches = knockoutData.roundOf16 || [];
+    const quarterFinalMatches = knockoutData.quarterFinals || [];
+    const semiFinalMatches = knockoutData.semiFinals || [];
+    const finalMatches = knockoutData.finals || [];
+
+    [
+      ...roundOf32Matches,
+      ...roundOf16Matches,
+      ...quarterFinalMatches,
+      ...semiFinalMatches,
+      ...finalMatches,
+    ].forEach((match) => {
+      results[match.id] = {
+        homeScore: match.homeScore || [null, null],
+        awayScore: match.awayScore || [null, null],
+      };
+    });
+
+    setMatchResults(results);
+  }, [slug]);
+
+  // Save results when editing completes
+  React.useEffect(() => {
+    if (editingMatchId) {
+      saveMatchResults();
+    }
+  }, [editingMatchId, saveMatchResults]);
+
+  // Load initial data
+  React.useEffect(() => {
+    loadMatchResults();
+  }, [tournamentData, loadMatchResults]);
 
   return (
-    <div
-      className={`flex items-center gap-x-3 w-full  ${
-        !isRoundOf16 ? "-ml-[90%]" : "-ml-[80%]"
-      }`}
-    >
+    <div className={cn("flex gap-x-3 w-full")}>
       <div className="flex flex-col gap-y-4">
-        {roundsOf16.map((match, idx) => {
-          const home = match.home.reduce((prev, curr) => prev + curr, 0);
-          const away = match.away.reduce((prev, curr) => prev + curr, 0);
-          const winner = home > away ? "playerOne" : "playerTwo";
-
-          const drawLine = isRoundOf16
-            ? idx === 7 || idx === 3
-            : idx === 3 || idx === 7 || idx === 11 || idx === 15;
-          const drawSecondLine = isRoundOf16
-            ? idx === 7
-            : idx === 7 || idx === 15;
+        {initialRound.map((match, idx) => {
+          const { home, away, id } = match;
+          const scores = matchResults[id] || {
+            homeScore: [null, null],
+            awayScore: [null, null],
+          };
+          const firstLegEnded =
+            scores.homeScore[0] !== null && scores.awayScore[0] !== null;
 
           return (
             <div className="flex items-center gap-x-2" key={idx}>
               <div className="flex flex-col gap-y-2">
-                <FixtureCard
-                  team={match.playerOne}
-                  groupName={"A"}
-                  matchIndex={0}
-                  onScoreChange={() => {}}
+                <DsFixtureCard
+                  team={home ?? ""}
+                  onScoreChange={(e, leg) =>
+                    handleScoreChange(e, id, true, leg ?? "first")
+                  }
+                  scores={scores.homeScore}
+                  firstLegEnded={firstLegEnded}
+                  disabled={disableScoreInput}
                   homeAway
                 />
 
-                <FixtureCard
-                  team={match.playerTwo}
-                  groupName={"B"}
-                  matchIndex={0}
-                  onScoreChange={() => {}}
+                <DsFixtureCard
+                  team={away ?? ""}
+                  onScoreChange={(e, leg) =>
+                    handleScoreChange(e, id, false, leg ?? "first")
+                  }
+                  scores={scores.awayScore}
+                  firstLegEnded={firstLegEnded}
+                  disabled={disableScoreInput}
                   homeAway
                 />
               </div>
 
-              <div className="flex items-center relative">
-                <div className="border-white border-y-[3px] border-r-[3px] h-10 w-5" />
-
-                <div className="flex items-center gap-x-2">
-                  <div className="w-4 border-white border-2" />
-
-                  <div className="flex items-center gap-x-2">
-                    <FixtureCard
-                      team={match[winner]}
-                      groupName={"B"}
-                      matchIndex={0}
-                      onScoreChange={() => {}}
-                      homeAway
-                    />
-
-                    {idx % 2 !== 0 && (
-                      <div className="border-white border-y-[3px] border-r-[3px] h-[90px] w-5 absolute -right-8 bottom-5 flex items-center justify-center">
-                        <div className="absolute left-5 flex items-center gap-x-2">
-                          <div className="w-4 border-white border-2" />
-
-                          <div className="flex items-center gap-x-2">
-                            <FixtureCard
-                              team={match[winner]}
-                              groupName={"B"}
-                              matchIndex={0}
-                              onScoreChange={() => {}}
-                              homeAway
-                            />
-
-                            {idx % 2 !== 0 && drawLine && (
-                              <div className="border-white border-y-[3px] border-r-[3px] h-[180px] w-5 absolute -right-8 bottom-4 flex items-center justify-center">
-                                <div className="absolute left-5 flex items-center gap-x-2">
-                                  <div className="w-4 border-white border-2" />
-
-                                  <FixtureCard
-                                    team={match[winner]}
-                                    groupName={"B"}
-                                    matchIndex={0}
-                                    homeAway={isRoundOf16 ? false : true}
-                                    onScoreChange={() => {}}
-                                  />
-
-                                  {idx % 2 !== 0 && drawSecondLine && (
-                                    <div className="border-white border-y-[3px] border-r-[3px] h-[360px] w-5 absolute -right-8 bottom-3 flex items-center justify-center">
-                                      <div className="absolute left-5 flex items-center gap-x-2">
-                                        <div className="w-4 border-white border-2" />
-
-                                        {!isRoundOf16 && (
-                                          <div className="flex items-center gap-x-2">
-                                            <FixtureCard
-                                              team={match[winner]}
-                                              groupName={"B"}
-                                              matchIndex={0}
-                                              single
-                                              onScoreChange={() => {}}
-                                            />
-
-                                            {idx % 2 !== 0 && idx === 15 && (
-                                              <div className="border-white border-y-[3px] border-r-[3px] h-[710px] w-5 absolute -right-8 bottom-3 flex items-center justify-center">
-                                                <div className="absolute left-5 flex items-center gap-x-2">
-                                                  <div className="w-4 border-white border-2" />
-                                                  <WinnerCard
-                                                    winner={match[winner]}
-                                                  />
-                                                </div>
-                                              </div>
-                                            )}
-                                          </div>
-                                        )}
-
-                                        {isRoundOf16 && (
-                                          <WinnerCard winner={match[winner]} />
-                                        )}
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
+              <div className="border-white border-y-[3px] border-r-[3px] h-10 w-5" />
+              <div className="w-4 border-white border-2" />
             </div>
           );
         })}
       </div>
+
+      <BracketConnections
+        matchResults={matchResults}
+        handleScoreChange={handleScoreChange}
+        KnockoutStages={knockoutStages}
+        getWinner={getWinner}
+      />
     </div>
   );
 };
 
 export default KnockoutStage;
-
-const WinnerCard = ({ winner }: { winner: string }) => {
-  return (
-    <div className="relative flex items-center">
-      <div className="absolute -top-8">
-        <h2 className="uppercase font-extrabold text-primary text-lg">
-          winner
-        </h2>
-      </div>
-
-      <div
-        className={
-          "justify-start md:px-2 md:min-w-[150px] h-8 flex items-center bg-white"
-        }
-      >
-        <p className={"text-dark font-extrabold text-base text-nowrap"}>
-          {winner}
-        </p>
-      </div>
-
-      <div className="absolute overflow-hidden size-16 md:size-40 -right-24">
-        <Image src={images.trophy} alt="trophy" width={1000} height={1000} />
-      </div>
-    </div>
-  );
-};

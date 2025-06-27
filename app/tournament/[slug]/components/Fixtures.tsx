@@ -10,10 +10,12 @@ const Fixtures = ({
   group,
   teams,
   slug,
+  isKnockoutRound = false,
 }: {
   group: string;
   teams: MatchFixture[];
   slug: string;
+  isKnockoutRound: boolean;
 }) => {
   const [matchResults, setMatchResults] = React.useState<{
     [key: string]: {
@@ -130,12 +132,10 @@ const Fixtures = ({
         {teams.map((team, idx) => (
           <div key={`${group}-${idx}`} className="flex items-center gap-x-4">
             <FixtureCard
-              groupName={group}
-              matchIndex={idx}
-              isHome
               team={team.players[0]}
               score={matchResults[`${group}-${idx}`]?.homeScore ?? null}
-              onScoreChange={handleScoreChange}
+              onScoreChange={(e) => handleScoreChange(e, group, idx, true)}
+              disabled={isKnockoutRound}
             />
 
             <div className="w-9 h-full bg-white flex items-center justify-center">
@@ -148,9 +148,8 @@ const Fixtures = ({
               team={team.players[1]}
               score={matchResults[`${group}-${idx}`]?.awayScore ?? null}
               className="flex-row-reverse"
-              groupName={group}
-              matchIndex={idx}
-              onScoreChange={handleScoreChange}
+              onScoreChange={(e) => handleScoreChange(e, group, idx, false)}
+              disabled={isKnockoutRound}
             />
           </div>
         ))}

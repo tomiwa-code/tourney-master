@@ -17,8 +17,9 @@ import GroupStage from "./GroupStage";
 import Link from "next/link";
 import Fixtures from "./Fixtures";
 import GoBack from "@/components/general/GoBack";
-import KnockoutStage from "./KnockoutStage";
+// import KnockoutStage from "./KnockoutStage";
 import { toast } from "sonner";
+import KnockoutStage from "./KnockoutStage";
 
 const tabArr = ["groups", "fixtures", "knockout"];
 const DynamicPageWrapper = ({ slug }: { slug: string }) => {
@@ -27,6 +28,7 @@ const DynamicPageWrapper = ({ slug }: { slug: string }) => {
     React.useState<TournamentDataType | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
 
+  // CHECK GROUP STAGE COMPLETION
   const completionStatus: CheckGroupStageCompletionRes = React.useMemo(() => {
     if (!tournamentData)
       return {
@@ -38,6 +40,7 @@ const DynamicPageWrapper = ({ slug }: { slug: string }) => {
     return checkGroupStageCompletion(tournamentData);
   }, [tournamentData]);
 
+  // GENERATE KNOCKOUT
   const generateKnockout = React.useCallback(() => {
     if (!tournamentData) {
       toast.error("Tournament data not found");
@@ -89,9 +92,11 @@ const DynamicPageWrapper = ({ slug }: { slug: string }) => {
     );
 
     toast.success("Knockout round drawn successfully");
+    setTournamentData(updatedTournamentData);
     setActiveTab("knockout");
   }, [tournamentData]);
 
+  // FETCH TOURNAMENT DATA
   React.useEffect(() => {
     const tournamentData = getTournamentData(slug);
     if (tournamentData) {
@@ -211,6 +216,7 @@ const DynamicPageWrapper = ({ slug }: { slug: string }) => {
                           group={group}
                           slug={slug}
                           teams={teams}
+                          isKnockoutRound={tournamentData.knockoutDrawn}
                         />
                       );
                     }
@@ -218,7 +224,29 @@ const DynamicPageWrapper = ({ slug }: { slug: string }) => {
                 </div>
               )}
 
-              {activeTab === "knockout" && <KnockoutStage />}
+              {activeTab === "knockout" && (
+                <>
+                  {!tournamentData.knockoutDrawn ? (
+                    <div className="w-full max-w-sm h-[300px] flex items-center justify-center flex-col gap-y-3 mt-10">
+                      <h2 className="text-white text-xl md:text-2xl font-semibold">
+                        Knockout stage not available.
+                      </h2>
+
+                      <p className="text-gray-400 text-center text-sm">
+                        The knockout stage is not available yet. Please complete
+                        the group stage and draw the knockout round.
+                      </p>
+                    </div>
+                  ) : (
+                    <KnockoutStage
+                      knockoutStages={tournamentData.knockoutStages}
+                      slug={slug}
+                      tournamentData={tournamentData}
+                      setTournamentData={setTournamentData}
+                    />
+                  )}
+                </>
+              )}
             </div>
           </div>
         )

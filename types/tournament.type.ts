@@ -92,11 +92,13 @@ export interface KnockoutMatch {
   round: string;
   home: string | null;
   away: string | null;
-  homeScore?: number[] | null;
-  awayScore?: number[] | null;
+  homeScore?: ScoreType | null;
+  awayScore?: ScoreType | null;
   winner?: string | null;
   completed: boolean;
 }
+
+export type ScoreType = (number | null)[];
 
 export interface Qualifier {
   player: string;
@@ -106,3 +108,22 @@ export interface Qualifier {
   gd: number;
   gf: number;
 }
+
+export type RoundsType =
+  | "roundOf16"
+  | "quarterFinals"
+  | "semiFinals"
+  | "finals";
+
+export type KnockoutDataMatch = {
+  id: string;
+  homeScore?: ScoreType | null;
+  awayScore?: ScoreType | null;
+};
+
+export type MatchResultsType = {
+  [key: string]: {
+    homeScore: ScoreType;
+    awayScore: ScoreType;
+  };
+};
