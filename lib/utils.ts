@@ -20,15 +20,6 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export const splitPlayerNames = (input: string) => {
-  const playerNamesArray = input
-    .split(/\s+/) // splits on spaces, tabs, newlines
-    .map((name) => name.trim())
-    .filter((name) => name); // remove empty strings
-
-  return playerNamesArray;
-};
-
 export const distributePlayersToGroups = (
   players: string[],
   playersPerGroup: number
@@ -45,64 +36,6 @@ export const distributePlayersToGroups = (
     const endIdx = startIdx + playersPerGroup;
     groups[groupName] = shuffledPlayers.slice(startIdx, endIdx);
   }
-
-  return groups;
-};
-
-export const distributePlayers = (
-  allPlayers: string[],
-  playersPerGroup: number,
-  method: DistributionMethod = "random",
-  customInput?: string
-): Record<string, string[]> => {
-  if (method === "custom" && customInput) {
-    return parseCustomDistribution(customInput, playersPerGroup);
-  }
-
-  // For random distribution, validate total player count
-  if (allPlayers.length % playersPerGroup !== 0) {
-    throw new Error(
-      `Total players (${allPlayers.length}) must be divisible by ${playersPerGroup}`
-    );
-  }
-
-  return distributePlayersToGroups(allPlayers, playersPerGroup);
-};
-
-const parseCustomDistribution = (
-  input: string,
-  playersPerGroup: number
-): Record<string, string[]> => {
-  const groups: Record<string, string[]> = {};
-  const groupStrings = input
-    .split("*")
-    .map((s) => s.trim())
-    .filter((s) => s.length > 0);
-
-  // Validate each group has correct number of players
-  for (let i = 0; i < groupStrings.length; i++) {
-    const players = splitPlayerNames(groupStrings[i]);
-
-    if (players.length !== playersPerGroup) {
-      throw new Error(
-        `Group ${String.fromCharCode(
-          65 + i
-        )} should have exactly ${playersPerGroup} players, but has ${
-          players.length
-        }`
-      );
-    }
-  }
-
-  // Create groups if validation passed
-  groupStrings.forEach((groupStr, index) => {
-    const groupName = String.fromCharCode(65 + index); // A, B, C, etc.
-    groups[groupName] = groupStr
-      .replaceAll(/\s+/g, ", ")
-      .split(",")
-      .map((name) => name.trim())
-      .filter((name) => name.length > 0);
-  });
 
   return groups;
 };
@@ -380,6 +313,66 @@ export const getTournamentData = (slug: string) => {
   toast.error("Failed to load tournament data.");
 };
 
+export const distributePlayers = (
+  allPlayers: string[],
+  playersPerGroup: number,
+  method: DistributionMethod = "random",
+  customInput?: string
+): Record<string, string[]> => {
+  if (method === "custom" && customInput) {
+    return parseCustomDistribution(customInput, playersPerGroup);
+  }
+
+  // For random distribution, validate total player count
+  if (allPlayers.length % playersPerGroup !== 0) {
+    throw new Error(
+      `Total players (${allPlayers.length}) must be divisible by ${playersPerGroup}`
+    );
+  }
+
+  return distributePlayersToGroups(allPlayers, playersPerGroup);
+};
+
+const parseCustomDistribution = (
+  input: string,
+  playersPerGroup: number
+): Record<string, string[]> => {
+  const groups: Record<string, string[]> = {};
+  const groupStrings = input
+    .split("*")
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+
+  // Validate each group has correct number of players
+  for (let i = 0; i < groupStrings.length; i++) {
+    const players = groupStrings[i]
+      .split(",")
+      .map((name) => name.trim())
+      .filter((name) => name.length > 0);
+
+    if (players.length !== playersPerGroup) {
+      throw new Error(
+        `Group ${String.fromCharCode(
+          65 + i
+        )} should have exactly ${playersPerGroup} players, but has ${
+          players.length
+        }`
+      );
+    }
+  }
+
+  // Create groups if validation passed
+  groupStrings.forEach((groupStr, index) => {
+    const groupName = String.fromCharCode(65 + index); // A, B, C, etc.
+    groups[groupName] = groupStr
+      .split(",")
+      .map((name) => name.trim())
+      .filter((name) => name.length > 0);
+  });
+
+  return groups;
+};
+
 export const getItemsStartingWith = <T = unknown>(
   prefix: string
 ): Record<string, T> => {
@@ -471,16 +464,11 @@ export const validateTournamentSetup = (
   const totalQualifiers = groupCount * qualifiersPerGroup;
 
   // Check if total qualifiers make a valid knockout bracket (16 or 32)
-  if (
-    totalQualifiers !== 16 &&
-    totalQualifiers !== 32 &&
-    totalQualifiers !== 8 &&
-    totalQualifiers !== 4
-  ) {
+  if (totalQualifiers !== 16 && totalQualifiers !== 32) {
     return {
       isValid: false,
       message: `With ${groupCount} groups and ${qualifiersPerGroup} qualifiers per group, you get ${totalQualifiers} total qualifiers. 
-      Knockout stages require exactly 32, 16, 8, or 4 teams. Please adjust your group/qualifier numbers.`,
+      Knockout stages require exactly 16 or 32 teams. Please adjust your group/qualifier numbers.`,
     };
   }
 
@@ -608,21 +596,13 @@ export const getQualifiers = (
  * @param homeScore - Array of home scores [firstLeg, secondLeg] or single score
  * @param awayScore - Array of away scores [firstLeg, secondLeg] or single score
  */
-export const updateMatchInStorage = ({
-  matchId,
-  roundKey,
-  slug,
-  isFinal = false,
-  firstLeg,
-  secondLeg,
-}: {
-  matchId: string;
-  roundKey: RoundsType;
-  slug: string;
-  isFinal?: boolean;
-  firstLeg?: number | number[];
-  secondLeg?: number | number[];
-}) => {
+export const updateMatchInStorage = (
+  matchId: string,
+  homeScore: number | number[],
+  awayScore: number | number[],
+  roundKey: RoundsType,
+  slug: string
+) => {
   try {
     // 1. Get current tournament data
     const tournamentData: TournamentDataType = getTournamentData(slug);
@@ -637,148 +617,87 @@ export const updateMatchInStorage = ({
     }
 
     // 3. Find the match to update
-    const matchToUpdate = round.find((match: any) => match.id === matchId);
+    const matchToUpdate = round.find(
+      (match: KnockoutMatch) => match.id === matchId
+    );
     if (!matchToUpdate) {
       throw new Error(`Match ${matchId} not found in round ${roundKey}`);
     }
 
     // 4. Normalize scores to arrays
-    const normalizedFirstLegScore = Array.isArray(firstLeg)
-      ? firstLeg
-      : [null, null];
-    const normalizedSecondLegScore = Array.isArray(secondLeg)
-      ? secondLeg
-      : [null, null];
+    const normalizedHomeScore = Array.isArray(homeScore)
+      ? homeScore
+      : [homeScore];
+    const normalizedAwayScore = Array.isArray(awayScore)
+      ? awayScore
+      : [awayScore];
 
-    // 5.1 If it's a first leg match, we only update the first leg score
-    if (firstLeg) {
-      const homeScore = [normalizedFirstLegScore[0], null];
-      const awayScore = [normalizedFirstLegScore[1], null];
+    // 5. Determine winner
+    const determineWinner = (): string => {
+      // For two-legged ties
+      if (normalizedHomeScore.length > 1) {
+        const homeAggregate = normalizedHomeScore.reduce((a, b) => a + b, 0);
+        const awayAggregate = normalizedAwayScore.reduce((a, b) => a + b, 0);
 
-      const updatedRounds = {
-        ...tournamentData,
-        [knockoutStages]: {
-          ...tournamentData.knockoutStages,
-          [roundKey]: round.map((match: any) => {
-            if (match.id === matchId) {
-              return {
-                ...match,
-                homeScore: homeScore,
-                awayScore: awayScore,
-                updatedAt: new Date().toISOString(),
-              };
-            }
-            return match;
-          }),
-        },
-      };
+        if (homeAggregate > awayAggregate) return matchToUpdate.home as string;
+        if (awayAggregate > homeAggregate) return matchToUpdate.away as string;
 
-      localStorage.setItem(
-        `tourney-master-${slug}`,
-        JSON.stringify(updatedRounds)
-      );
-
-      return updatedRounds;
-    }
-
-    // 5.2 If it's a two-legged match, we update both legs
-    if (secondLeg) {
-      const homeScore = [
-        matchToUpdate.homeScore?.[0],
-        normalizedSecondLegScore[0],
-      ];
-      const awayScore = [
-        matchToUpdate.awayScore?.[0] ?? null,
-        normalizedSecondLegScore[1],
-      ];
-
-      // 6. Determine winner
-      const sanitizedHomeScore = homeScore.map((s) => s ?? 0);
-      const sanitizedAwayScore = awayScore.map((s) => s ?? 0);
-      const winner = determineWinner(
-        sanitizedHomeScore,
-        sanitizedAwayScore,
-        matchToUpdate
-      );
-
-      // 7. Update the match
-      const updatedRounds = {
-        ...tournamentData,
-        [knockoutStages]: {
-          ...tournamentData.knockoutStages,
-          [roundKey]: round.map((match: any) => {
-            if (match.id === matchId) {
-              return {
-                ...match,
-                homeScore: homeScore,
-                awayScore: awayScore,
-                winner,
-                completed: true,
-                updatedAt: new Date().toISOString(),
-              };
-            }
-            return match;
-          }),
-        },
-      };
-
-      if (roundKey === "finals" && winner !== "draw") {
-        localStorage.setItem(
-          `tourney-master-${slug}`,
-          JSON.stringify(updatedRounds)
-        );
-
-        return updatedRounds;
+        // If still tied (could add penalty shootout logic here)
+        return "draw";
       }
 
-      // . Advance to next round if applicable
-      if (roundKey !== "finals" && winner !== "draw") {
-        const nextRoundKey = getNextRoundKey(roundKey);
+      // For single matches
+      if (normalizedHomeScore[0] > normalizedAwayScore[0])
+        return matchToUpdate.home as string;
+      if (normalizedAwayScore[0] > normalizedHomeScore[0])
+        return matchToUpdate.away as string;
+      return "draw";
+    };
 
-        if (nextRoundKey) {
-          const isDrawn = drawNextKnockoutRound(
-            updatedRounds,
-            nextRoundKey,
-            winner,
-            matchId,
-            slug
-          );
+    const winner = determineWinner();
 
-          if (isDrawn) {
-            return isDrawn;
+    // 6. Update the match
+    const updatedRounds = {
+      ...tournamentData,
+      [knockoutStages]: {
+        ...tournamentData.knockoutStages,
+        [roundKey]: round.map((match: KnockoutMatch) => {
+          if (match.id === matchId) {
+            return {
+              ...match,
+              homeScore: normalizedHomeScore,
+              awayScore: normalizedAwayScore,
+              winner,
+              completed: true,
+              updatedAt: new Date().toISOString(),
+            };
           }
+          return match;
+        }),
+      },
+    };
+
+    // . Advance to next round if applicable
+    if (roundKey !== "finals" && winner !== "draw") {
+      const nextRoundKey = getNextRoundKey(roundKey);
+
+      if (nextRoundKey) {
+        const isDraw = drawNextKnockoutRound(
+          updatedRounds,
+          nextRoundKey,
+          winner,
+          matchId,
+          slug
+        );
+
+        if (isDraw) {
+          return true;
         }
       }
     }
   } catch (error) {
     throw new Error(`Failed to update match: ${error}`);
   }
-};
-
-const determineWinner = (
-  homeScore: number[],
-  awayScore: number[],
-  matchToUpdate: KnockoutMatch
-): string => {
-  // For two-legged ties
-  const isHomeScoreComplete = homeScore.every((score) => score !== null);
-  const isAwayScoreComplete = awayScore.every((score) => score !== null);
-
-  if (isAwayScoreComplete && isHomeScoreComplete) {
-    const homeAggregate = homeScore.reduce((a: number, b) => a + b, 0);
-    const awayAggregate = awayScore.reduce((a: number, b) => a + b, 0);
-
-    if (homeAggregate > awayAggregate) return matchToUpdate.home as string;
-    if (awayAggregate > homeAggregate) return matchToUpdate.away as string;
-
-    // If still tied (could add penalty shootout logic here)
-    return "draw";
-  }
-
-  // For single matches
-  if (homeScore[0] > awayScore[0]) return matchToUpdate.home as string;
-  if (awayScore[0] > homeScore[0]) return matchToUpdate.away as string;
-  return "draw";
 };
 
 const drawNextKnockoutRound = (
@@ -866,7 +785,7 @@ const getNextRoundKey = (currentRound: string): RoundsType | null => {
   ];
   const currentIndex = roundOrder.indexOf(currentRound);
   return currentIndex < roundOrder.length - 1
-    ? (roundOrder[currentIndex + 1] as any)
+    ? (roundOrder[currentIndex + 1] as RoundsType)
     : null;
 };
 

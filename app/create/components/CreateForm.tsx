@@ -18,9 +18,6 @@ import { Button } from "@/components/ui/button";
 
 interface CreateFormProps {
   formData: CreateTournamentFormDataType;
-  setFormData: React.Dispatch<
-    React.SetStateAction<CreateFormProps["formData"]>
-  >;
   handleChange: (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => void;
@@ -33,7 +30,6 @@ const groupOptions = ["group", "knockout"];
 
 const CreateForm = ({
   formData,
-  setFormData,
   handleChange,
   handleSubmit,
   handleSelectChange,

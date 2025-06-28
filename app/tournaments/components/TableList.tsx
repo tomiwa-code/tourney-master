@@ -12,7 +12,7 @@ import {
 import { TournamentDataType } from "@/types/tournament.type";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash } from "lucide-react";
+import { Trash } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -44,9 +44,9 @@ const TableList = ({
 }: TableListProps) => {
   const [openDeleteModal, setOpenDeleteModal] = React.useState(false);
   const [aboutToDelete, setAboutToDelete] = React.useState<string | null>(null);
-  const [openEditModal, setOpenEditModal] = React.useState(false);
-  const [activeTournament, setActiveTournament] =
-    React.useState<TournamentDataType | null>(null);
+  // const [openEditModal, setOpenEditModal] = React.useState(false);
+  // const [activeTournament, setActiveTournament] =
+  //   React.useState<TournamentDataType | null>(null);
 
   const handleDelete = (slug: string) => {
     localStorage.removeItem(`tourney-master-${slug}`);
@@ -60,10 +60,10 @@ const TableList = ({
     toast.success(`Tournament ${slug} deleted successfully!`);
   };
 
-  const handleEdit = (tournament: TournamentDataType) => {
-    setActiveTournament(tournament);
-    setOpenEditModal(true);
-  };
+  // const handleEdit = (tournament: TournamentDataType) => {
+  //   setActiveTournament(tournament);
+  //   setOpenEditModal(true);
+  // };
 
   return (
     <>
@@ -127,7 +127,9 @@ const TableList = ({
                 <TableCell className={`${cellStyle}`}>
                   {playersPerGroup ?? "null"}
                 </TableCell>
-                <TableCell className={`${cellStyle} flex items-center justify-center gap-x-2`}>
+                <TableCell
+                  className={`${cellStyle} flex items-center justify-center gap-x-2`}
+                >
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
