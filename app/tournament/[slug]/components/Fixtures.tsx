@@ -57,29 +57,28 @@ const Fixtures = ({
     }));
   };
 
-  const handleScoreSubmit = (
-    groupName: string,
-    matchIndex: number,
-    scores: [number, number]
-  ) => {
-    const currentTournament = getTournamentData(slug);
-    if (!currentTournament) return;
+  const handleScoreSubmit = React.useCallback(
+    (groupName: string, matchIndex: number, scores: [number, number]) => {
+      const currentTournament = getTournamentData(slug);
+      if (!currentTournament) return;
 
-    const updatedTournament = updateMatchScore(
-      currentTournament,
-      groupName,
-      matchIndex,
-      scores[0],
-      scores[1]
-    );
+      const updatedTournament = updateMatchScore(
+        currentTournament,
+        groupName,
+        matchIndex,
+        scores[0],
+        scores[1]
+      );
 
-    localStorage.setItem(
-      `tourney-master-${slug}`,
-      JSON.stringify(updatedTournament)
-    );
+      localStorage.setItem(
+        `tourney-master-${slug}`,
+        JSON.stringify(updatedTournament)
+      );
 
-    toast.success("Match results saved!");
-  };
+      toast.success("Match results saved!");
+    },
+    []
+  );
 
   React.useEffect(() => {
     const initialResults = teams.reduce(

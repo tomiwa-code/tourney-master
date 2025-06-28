@@ -178,7 +178,7 @@ const KnockoutStage = ({
 
       return;
     }
-  }, [editingMatchId, matchResults, isRoundOf16, slug, setTournamentData]);
+  }, [editingMatchId, matchResults, slug, setTournamentData]);
 
   // Get winner of a match based on round and match ID
   const getWinner = React.useCallback(
