@@ -58,7 +58,11 @@ const Fixtures = ({
   };
 
   const handleScoreSubmit = React.useCallback(
-    (groupName: string, matchIndex: number, scores: [number, number]) => {
+    (
+      groupName: string,
+      matchIndex: number,
+      scores: [number | null, number | null]
+    ) => {
       const currentTournament = getTournamentData(slug);
       if (!currentTournament) return;
 
@@ -106,17 +110,26 @@ const Fixtures = ({
 
   React.useEffect(() => {
     Object.entries(matchResults).forEach(([key, result]) => {
+      const [groupName, matchIndex] = key.split("-");
       if (
         result.homeScore !== null &&
         result.awayScore !== null &&
         isEditing.includes(key)
       ) {
-        const [groupName, matchIndex] = key.split("-");
         handleScoreSubmit(groupName, parseInt(matchIndex, 10), [
           result.homeScore,
           result.awayScore,
         ]);
         setIsEditing((prev) => prev.filter((id) => id !== key));
+      } else if (
+        result.homeScore === null &&
+        result.awayScore === null &&
+        isEditing.includes(key)
+      ) {
+        handleScoreSubmit(groupName, parseInt(matchIndex, 10), [
+          result.homeScore,
+          result.awayScore,
+        ]);
       }
     });
   }, [matchResults, isEditing, handleScoreSubmit]);

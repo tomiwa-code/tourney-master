@@ -202,8 +202,8 @@ export const updateMatchScore = (
   tournament: TournamentDataType,
   groupName: string,
   matchIndex: number,
-  homeScore: number,
-  awayScore: number
+  homeScore: number | null,
+  awayScore: number | null
 ): TournamentDataType => {
   const updatedTournament = JSON.parse(JSON.stringify(tournament));
   const match = updatedTournament.groupFixtures[groupName][matchIndex];
@@ -252,7 +252,7 @@ const addMatchResult = (
   groupName: string,
   groups: Record<string, string[]>,
   players: [string, string],
-  scores: [number, number],
+  scores: [number | null, number | null],
   date: string
 ): UpdatedStandings => {
   // 1. Deep copy with initialization
@@ -270,16 +270,26 @@ const addMatchResult = (
   const [homePlayer, awayPlayer] = players;
   const [homeScore, awayScore] = scores;
 
+  const bothScoreValid = homeScore !== null && awayScore !== null;
+
   const homePoints =
-    homeScore > awayScore ? 3 : homeScore === awayScore ? 1 : 0;
+    bothScoreValid && homeScore > awayScore
+      ? 3
+      : homeScore === awayScore
+      ? 1
+      : 0;
   const awayPoints =
-    awayScore > homeScore ? 3 : awayScore === homeScore ? 1 : 0;
+    bothScoreValid && awayScore > homeScore
+      ? 3
+      : awayScore === homeScore
+      ? 1
+      : 0;
 
   // Add match to home player's history
   const homePlayerStats = updatedStandings[groupName].find(
     (p: PlayerStats) => p.player === homePlayer
   );
-  if (homePlayerStats) {
+  if (homePlayerStats && bothScoreValid) {
     homePlayerStats.matches.push({
       opponent: awayPlayer,
       isHome: true,
@@ -294,7 +304,7 @@ const addMatchResult = (
   const awayPlayerStats = updatedStandings[groupName].find(
     (p: PlayerStats) => p.player === awayPlayer
   );
-  if (awayPlayerStats) {
+  if (awayPlayerStats && bothScoreValid) {
     awayPlayerStats.matches.push({
       opponent: homePlayer,
       isHome: false,
@@ -706,6 +716,7 @@ export const updateMatchInStorage = ({
         ...tournamentData,
         [knockoutStages]: {
           ...tournamentData.knockoutStages,
+          status: roundKey === "finals" ? "completed" : tournamentData.status,
           [roundKey]: round.map((match: KnockoutMatch) => {
             if (match.id === matchId) {
               return {
