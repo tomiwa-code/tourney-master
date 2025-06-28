@@ -19,6 +19,8 @@ import Fixtures from "./Fixtures";
 import GoBack from "@/components/general/GoBack";
 import { toast } from "sonner";
 import KnockoutStage from "./KnockoutStage";
+import { Dialog } from "@/components/ui/dialog";
+import DrawKnockoutModal from "./DrawKnockoutModal";
 
 const tabArr = ["groups", "fixtures", "knockout"];
 const DynamicPageWrapper = ({ slug }: { slug: string }) => {
@@ -26,6 +28,7 @@ const DynamicPageWrapper = ({ slug }: { slug: string }) => {
   const [tournamentData, setTournamentData] =
     React.useState<TournamentDataType | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [openModal, setOpenModal] = React.useState(true);
 
   // CHECK GROUP STAGE COMPLETION
   const completionStatus: CheckGroupStageCompletionRes = React.useMemo(() => {
@@ -188,7 +191,7 @@ const DynamicPageWrapper = ({ slug }: { slug: string }) => {
                     !tournamentData.knockoutDrawn && (
                       <div className="w-full flex items-center justify-center mt-10">
                         <Button
-                          onClick={generateKnockout}
+                          onClick={() => setOpenModal(true)}
                           className="capitalize bg-dark-300 h-12 px-5 hover:bg-dark-400 duration-300 text-white font-medium"
                         >
                           draw knockout
@@ -258,6 +261,13 @@ const DynamicPageWrapper = ({ slug }: { slug: string }) => {
           </div>
         )
       )}
+
+      <Dialog open={openModal} onOpenChange={setOpenModal}>
+        <DrawKnockoutModal
+          onClose={() => setOpenModal(false)}
+          drawKnockout={generateKnockout}
+        />
+      </Dialog>
     </div>
   );
 };
