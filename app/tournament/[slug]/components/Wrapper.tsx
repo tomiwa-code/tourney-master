@@ -17,7 +17,6 @@ import GroupStage from "./GroupStage";
 import Link from "next/link";
 import Fixtures from "./Fixtures";
 import GoBack from "@/components/general/GoBack";
-// import KnockoutStage from "./KnockoutStage";
 import { toast } from "sonner";
 import KnockoutStage from "./KnockoutStage";
 
@@ -190,10 +189,9 @@ const DynamicPageWrapper = ({ slug }: { slug: string }) => {
 
                   {!completionStatus.allCompleted && (
                     <div className="w-full max-w-xl mx-auto mt-10">
-                      <p className="text-red-500 text-center mt-5">
-                        Some groups are not completed yet. Please wait for all
-                        matches to be played before proceeding to the knockout
-                        stage.
+                      <p className="text-gray-500 text-center mt-5">
+                        Please note: if all groups matches are not completed
+                        yet, the knockout stage cannot be drawn.
                       </p>
                       {completionStatus.incompleteGroups.length > 0 && (
                         <p className="text-gray-400 text-center mt-2">

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
 import MotherWrapper from "@/components/general/MotherWrapper";
+import NextTopLoader from "nextjs-toploader";
 import { Toaster } from "sonner";
 
 const poppins = Poppins({
@@ -24,6 +25,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${poppins.className} antialiased`}>
         <MotherWrapper>
+          <NextTopLoader showSpinner={false} color="#fdd107" />
           {children}
           <Toaster richColors position="bottom-right" />
         </MotherWrapper>

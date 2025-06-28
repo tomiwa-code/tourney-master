@@ -20,6 +20,15 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+export const splitPlayerNames = (input: string) => {
+  const playerNamesArray = input
+    .split(/\s+/) // splits on spaces, tabs, newlines
+    .map((name) => name.trim())
+    .filter((name) => name); // remove empty strings
+
+  return playerNamesArray;
+};
+
 export const distributePlayersToGroups = (
   players: string[],
   playersPerGroup: number
@@ -36,6 +45,64 @@ export const distributePlayersToGroups = (
     const endIdx = startIdx + playersPerGroup;
     groups[groupName] = shuffledPlayers.slice(startIdx, endIdx);
   }
+
+  return groups;
+};
+
+export const distributePlayers = (
+  allPlayers: string[],
+  playersPerGroup: number,
+  method: DistributionMethod = "random",
+  customInput?: string
+): Record<string, string[]> => {
+  if (method === "custom" && customInput) {
+    return parseCustomDistribution(customInput, playersPerGroup);
+  }
+
+  // For random distribution, validate total player count
+  if (allPlayers.length % playersPerGroup !== 0) {
+    throw new Error(
+      `Total players (${allPlayers.length}) must be divisible by ${playersPerGroup}`
+    );
+  }
+
+  return distributePlayersToGroups(allPlayers, playersPerGroup);
+};
+
+const parseCustomDistribution = (
+  input: string,
+  playersPerGroup: number
+): Record<string, string[]> => {
+  const groups: Record<string, string[]> = {};
+  const groupStrings = input
+    .split("*")
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+
+  // Validate each group has correct number of players
+  for (let i = 0; i < groupStrings.length; i++) {
+    const players = splitPlayerNames(groupStrings[i]);
+
+    if (players.length !== playersPerGroup) {
+      throw new Error(
+        `Group ${String.fromCharCode(
+          65 + i
+        )} should have exactly ${playersPerGroup} players, but has ${
+          players.length
+        }`
+      );
+    }
+  }
+
+  // Create groups if validation passed
+  groupStrings.forEach((groupStr, index) => {
+    const groupName = String.fromCharCode(65 + index); // A, B, C, etc.
+    groups[groupName] = groupStr
+      .replaceAll(/\s+/g, ", ")
+      .split(",")
+      .map((name) => name.trim())
+      .filter((name) => name.length > 0);
+  });
 
   return groups;
 };
@@ -313,66 +380,6 @@ export const getTournamentData = (slug: string) => {
   toast.error("Failed to load tournament data.");
 };
 
-export const distributePlayers = (
-  allPlayers: string[],
-  playersPerGroup: number,
-  method: DistributionMethod = "random",
-  customInput?: string
-): Record<string, string[]> => {
-  if (method === "custom" && customInput) {
-    return parseCustomDistribution(customInput, playersPerGroup);
-  }
-
-  // For random distribution, validate total player count
-  if (allPlayers.length % playersPerGroup !== 0) {
-    throw new Error(
-      `Total players (${allPlayers.length}) must be divisible by ${playersPerGroup}`
-    );
-  }
-
-  return distributePlayersToGroups(allPlayers, playersPerGroup);
-};
-
-const parseCustomDistribution = (
-  input: string,
-  playersPerGroup: number
-): Record<string, string[]> => {
-  const groups: Record<string, string[]> = {};
-  const groupStrings = input
-    .split("*")
-    .map((s) => s.trim())
-    .filter((s) => s.length > 0);
-
-  // Validate each group has correct number of players
-  for (let i = 0; i < groupStrings.length; i++) {
-    const players = groupStrings[i]
-      .split(",")
-      .map((name) => name.trim())
-      .filter((name) => name.length > 0);
-
-    if (players.length !== playersPerGroup) {
-      throw new Error(
-        `Group ${String.fromCharCode(
-          65 + i
-        )} should have exactly ${playersPerGroup} players, but has ${
-          players.length
-        }`
-      );
-    }
-  }
-
-  // Create groups if validation passed
-  groupStrings.forEach((groupStr, index) => {
-    const groupName = String.fromCharCode(65 + index); // A, B, C, etc.
-    groups[groupName] = groupStr
-      .split(",")
-      .map((name) => name.trim())
-      .filter((name) => name.length > 0);
-  });
-
-  return groups;
-};
-
 export const getItemsStartingWith = <T = unknown>(
   prefix: string
 ): Record<string, T> => {
@@ -464,11 +471,16 @@ export const validateTournamentSetup = (
   const totalQualifiers = groupCount * qualifiersPerGroup;
 
   // Check if total qualifiers make a valid knockout bracket (16 or 32)
-  if (totalQualifiers !== 16 && totalQualifiers !== 32) {
+  if (
+    totalQualifiers !== 16 &&
+    totalQualifiers !== 32 &&
+    totalQualifiers !== 8 &&
+    totalQualifiers !== 4
+  ) {
     return {
       isValid: false,
       message: `With ${groupCount} groups and ${qualifiersPerGroup} qualifiers per group, you get ${totalQualifiers} total qualifiers. 
-      Knockout stages require exactly 16 or 32 teams. Please adjust your group/qualifier numbers.`,
+      Knockout stages require exactly 32, 16, 8, or 4 teams. Please adjust your group/qualifier numbers.`,
     };
   }
 

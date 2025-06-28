@@ -43,21 +43,34 @@ export const createTournamentValidateInput = ({
 
 export const validatePlayerNames = (
   playerNames: string[],
-  maxPlayers: number
+  maxPlayers: number,
+  isCustomInput: boolean = false
 ) => {
   if (playerNames.length < 2) {
     toast.error("At least two player names are required");
     return false;
   }
 
-  if (playerNames.length > Number(maxPlayers)) {
+  if (isCustomInput) {
+    const newNames = playerNames.filter((name) => name !== "*");
+    if (newNames.length > Number(maxPlayers)) {
+      toast.error(
+        `Number of player names cannot exceed max players (${maxPlayers}) and you have provided ${playerNames.length} names.`
+      );
+      return false;
+    }
+
+    return true;
+  }
+
+  if (!isCustomInput && playerNames.length > Number(maxPlayers)) {
     toast.error(
       `Number of player names cannot exceed max players (${maxPlayers}) and you have provided ${playerNames.length} names.`
     );
     return false;
   }
 
-  if (maxPlayers && playerNames.length < Number(maxPlayers)) {
+  if (!isCustomInput && maxPlayers && playerNames.length < Number(maxPlayers)) {
     toast.error(
       `You have provided ${playerNames.length} player names, but the max players is set to ${maxPlayers}. Please add more player names or adjust the max players.`,
       {

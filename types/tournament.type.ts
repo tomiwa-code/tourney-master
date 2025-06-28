@@ -127,3 +127,14 @@ export type MatchResultsType = {
     awayScore: ScoreType;
   };
 };
+
+export type CreateTournamentFormDataType = {
+  tournamentName: string;
+  maxPlayers: string;
+  playersPerGroup: string;
+  playerNames: string;
+  distribution: DistributionMethod;
+  playerInput: string;
+  qualifier: string;
+  gameType: string;
+};
