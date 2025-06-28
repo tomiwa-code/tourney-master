@@ -291,6 +291,7 @@ const KnockoutStage = ({
         handleScoreChange={handleScoreChange}
         KnockoutStages={knockoutStages}
         getWinner={getWinner}
+        knockoutStatus={tournamentData.status === "completed"}
       />
     </div>
   );

@@ -829,9 +829,12 @@ export const updateMatchInStorage = ({
       // 7. Update the match
       const updatedRounds = {
         ...tournamentData,
+        status:
+          roundKey === "finals" && winner !== "draw"
+            ? "completed"
+            : tournamentData.status,
         [knockoutStages]: {
           ...tournamentData.knockoutStages,
-          status: roundKey === "finals" ? "completed" : tournamentData.status,
           [roundKey]: round.map((match: KnockoutMatch) => {
             if (match.id === matchId) {
               return {
@@ -853,7 +856,6 @@ export const updateMatchInStorage = ({
           `tourney-master-${slug}`,
           JSON.stringify(updatedRounds)
         );
-
         return updatedRounds;
       }
 

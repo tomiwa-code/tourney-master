@@ -12,6 +12,7 @@ import BracketRound from "./BracketRound";
 interface BracketConnectionsProps {
   matchResults: MatchResultsType;
   KnockoutStages: KnockoutStages;
+  knockoutStatus: boolean;
   getWinner: (
     round: RoundsType,
     matchId: string,
@@ -29,12 +30,12 @@ const BracketConnections = ({
   handleScoreChange,
   getWinner,
   KnockoutStages,
+  knockoutStatus,
   matchResults,
 }: BracketConnectionsProps) => {
   const { quarterFinals, semiFinals, finals, roundOf16 } = KnockoutStages;
   const tournamentWinner =
     finals !== undefined && finals[0]?.winner ? finals[0].winner : "";
-  const disableScoreInput = tournamentWinner !== "" ? true : false;
 
   return (
     <>
@@ -46,7 +47,7 @@ const BracketConnections = ({
         previousRound={roundOf16}
         previousRoundType={"roundOf16"}
         bracketLength={8}
-        isDisabled={disableScoreInput}
+        isDisabled={knockoutStatus}
       />
 
       <BracketRound
@@ -59,7 +60,7 @@ const BracketConnections = ({
         bracketLength={4}
         className="ml-[60] py-16"
         bracketLineClass="h-[185px]"
-        isDisabled={disableScoreInput}
+        isDisabled={knockoutStatus}
       />
 
       <BracketRound
@@ -72,7 +73,7 @@ const BracketConnections = ({
         bracketLength={2}
         className="ml-[60] pt-[150px] pb-[155px]"
         bracketLineClass="h-[355px] bottom-4"
-        isDisabled={disableScoreInput}
+        isDisabled={knockoutStatus}
         isFinal
       />
 
