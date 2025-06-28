@@ -77,7 +77,7 @@ const Fixtures = ({
 
       toast.success("Match results saved!");
     },
-    []
+    [slug]
   );
 
   React.useEffect(() => {

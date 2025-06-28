@@ -93,7 +93,7 @@ const DynamicPageWrapper = ({ slug }: { slug: string }) => {
     toast.success("Knockout round drawn successfully");
     setTournamentData(updatedTournamentData);
     setActiveTab("knockout");
-  }, [tournamentData]);
+  }, [tournamentData, completionStatus, slug]);
 
   // FETCH TOURNAMENT DATA
   React.useEffect(() => {

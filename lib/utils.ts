@@ -800,7 +800,7 @@ const drawNextKnockoutRound = (
   const isHomeInNextRound = sourceMatchNumber % 2 === 1; // Odd numbers go to home, even to away
 
   // 3. Find or create the target match
-  let targetMatch = round.find((match) => {
+  const targetMatch = round.find((match) => {
     const matchNum = parseInt(match.id.split("-").pop() || "0", 10);
     return matchNum === targetMatchNumber;
   });

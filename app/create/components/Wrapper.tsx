@@ -158,7 +158,6 @@ const CreateWrapper = () => {
 
       <CreateForm
         formData={formData}
-        setFormData={setFormData}
         handleChange={handleChange}
         handleSubmit={handleSubmit}
         handleSelectChange={handleSelectChange}
