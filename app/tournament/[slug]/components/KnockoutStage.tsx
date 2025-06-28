@@ -108,9 +108,9 @@ const KnockoutStage = ({
       ? "roundOf16"
       : splitId.includes("32")
       ? "roundOf32"
-      : splitId.includes("Quarter")
+      : splitId.includes("quarter") || splitId.includes("Quarter")
       ? "quarterFinals"
-      : splitId.includes("Semi")
+      : splitId.includes("semi") || splitId.includes("Semi")
       ? "semiFinals"
       : "finals";
 
@@ -182,8 +182,17 @@ const KnockoutStage = ({
 
   // Get winner of a match based on round and match ID
   const getWinner = React.useCallback(
-    (round: RoundsType, matchId: string): KnockoutMatch => {
+    (
+      round: RoundsType,
+      matchId: string,
+      currentRound: KnockoutMatch
+    ): KnockoutMatch => {
       const knockoutData = tournamentData.knockoutStages[round];
+
+      if (knockoutData && knockoutData.length === 0) {
+        return currentRound;
+      }
+
       return knockoutData?.find((m) => m.id === matchId) ?? { ...commonItem };
     },
     [tournamentData]
@@ -198,7 +207,6 @@ const KnockoutStage = ({
     if (!knockoutData) return;
 
     const results: MatchResultsType = {};
-
     const roundOf32Matches = knockoutData.roundOf32 || [];
     const roundOf16Matches = knockoutData.roundOf16 || [];
     const quarterFinalMatches = knockoutData.quarterFinals || [];

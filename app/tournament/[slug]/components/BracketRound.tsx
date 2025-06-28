@@ -12,7 +12,11 @@ interface BracketRoundProps {
   currentRound: KnockoutMatch[];
   previousRound: KnockoutMatch[];
   previousRoundType: RoundsType;
-  getWinner: (round: RoundsType, matchId: string) => KnockoutMatch;
+  getWinner: (
+    round: RoundsType,
+    matchId: string,
+    currentRound: KnockoutMatch
+  ) => KnockoutMatch;
   className?: string;
   bracketLineClass?: string;
   bracketLength: number;
@@ -39,6 +43,8 @@ const BracketRound = ({
   isFinal,
   isDisabled,
 }: BracketRoundProps) => {
+  const previousRoundIsEmpty = previousRound.length === 0;
+
   return (
     <div
       className={cn(
@@ -51,12 +57,20 @@ const BracketRound = ({
           previousRoundType,
           previousRound?.length > 0 && previousRound[idx]
             ? previousRound[idx].id
-            : ""
+            : "",
+          currentRound[Math.floor(idx / 2)]
         );
 
         const currentRoundMatch = currentRound[Math.floor(idx / 2)];
         const isHome = idx % 2 === 0 ? true : false;
         const isAway = !isHome ? true : false;
+
+        const teamName =
+          previousRoundIsEmpty && isHome
+            ? winnerMatch?.home ?? ""
+            : previousRoundIsEmpty && isAway
+            ? winnerMatch?.away ?? ""
+            : winnerMatch?.winner ?? "";
 
         const scores = (currentRoundMatch !== undefined &&
           matchResults[currentRoundMatch.id] &&
@@ -72,7 +86,7 @@ const BracketRound = ({
           <div className="relative" key={idx}>
             <FixtureCard
               key={idx}
-              team={winnerMatch.winner ?? ""}
+              team={teamName}
               onScoreChange={(e, leg) =>
                 handleScoreChange(
                   e,
@@ -89,7 +103,7 @@ const BracketRound = ({
                   : [null, null]
               }
               homeAway
-              disabled={isDisabled || !winnerMatch.winner}
+              disabled={isDisabled || !teamName}
               firstLegEnded={firstLegEnded}
               single={isFinal}
             />

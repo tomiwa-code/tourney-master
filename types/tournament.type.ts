@@ -110,6 +110,7 @@ export interface Qualifier {
 }
 
 export type RoundsType =
+  | "roundOf32"
   | "roundOf16"
   | "quarterFinals"
   | "semiFinals"

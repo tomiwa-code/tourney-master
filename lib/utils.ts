@@ -497,96 +497,211 @@ export const validateTournamentSetup = (
   return { isValid: true };
 };
 
-export const drawKnockoutRound = (qualifiers: Qualifier[]): KnockoutMatch[] => {
+export const drawKnockoutRound = (
+  qualifiers: Qualifier[],
+  qualifiersPerGroup: number
+): KnockoutMatch[] => {
   const totalQualifiers = qualifiers.length;
-  const isRoundOf32 = totalQualifiers === 32;
-  const roundName = isRoundOf32 ? "Round of 32" : "Round of 16";
 
-  // Categorize qualifiers by their group position
-  const groupPositions: Record<string, Qualifier[]> = {
-    first: [], // Group winners (1st place)
-    second: [], // Runners-up (2nd place)
-    third: [], // 3rd place
-    fourth: [], // 4th place
-  };
+  // Validate qualifiers count is a power of two
+  if (!isPowerOfTwo(totalQualifiers) || totalQualifiers < 4) {
+    throw new Error(
+      `Invalid qualifier count: ${totalQualifiers}. Must be a power of two (4, 8, 16, 32, etc.)`
+    );
+  }
 
-  // Sort teams into their group positions
+  let roundKey: RoundsType;
+  switch (qualifiers.length) {
+    case 32:
+      roundKey = "roundOf32";
+      break;
+    case 16:
+      roundKey = "roundOf16";
+      break;
+    case 8:
+      roundKey = "quarterFinals";
+      break;
+    case 4:
+      roundKey = "semiFinals";
+      break;
+    default:
+      roundKey = "roundOf16";
+      break;
+  }
+
+  const roundName = roundNameMap[roundKey];
+
+  // 1. Categorize qualifiers by their group position
+  const positionGroups: Record<number, Qualifier[]> = {};
+
+  // Initialize position groups
+  for (let i = 1; i <= qualifiersPerGroup; i++) {
+    positionGroups[i] = [];
+  }
+
+  // Sort qualifiers into position groups
   qualifiers.forEach((team) => {
-    if (team.position === 1) groupPositions.first.push(team);
-    else if (team.position === 2) groupPositions.second.push(team);
-    else if (team.position === 3) groupPositions.third.push(team);
-    else if (team.position === 4) groupPositions.fourth.push(team);
+    if (team.position <= qualifiersPerGroup) {
+      if (!positionGroups[team.position]) {
+        positionGroups[team.position] = [];
+      }
+      positionGroups[team.position].push(team);
+    }
   });
 
-  // Sort each category by performance (pts > GD > GF)
+  // 2. Sort each position group by performance (pts > GD > GF)
   const sortTeams = (teams: Qualifier[]) =>
     [...teams].sort((a, b) => b.pts - a.pts || b.gd - a.gd || b.gf - a.gf);
 
-  const firstPlace = sortTeams(groupPositions.first);
-  const secondPlace = sortTeams(groupPositions.second);
-  const thirdPlace = sortTeams(groupPositions.third);
-  const fourthPlace = sortTeams(groupPositions.fourth);
+  // Sort all position groups
+  for (const position in positionGroups) {
+    positionGroups[position] = sortTeams(positionGroups[position]);
+  }
+
+  // 3. Create position pairs based on qualifiers per group
+  const positionPairs: [number, number][] = [];
+  const positions = Object.keys(positionGroups).map(Number).sort();
+
+  // Create pairs from highest to lowest positions
+  for (let i = 0; i < positions.length / 2; i++) {
+    const highPosition = positions[i];
+    const lowPosition = positions[positions.length - 1 - i];
+    positionPairs.push([highPosition, lowPosition]);
+  }
 
   const matches: KnockoutMatch[] = [];
 
-  // Pair 1st place teams with 4th place teams from different groups
-  for (let i = 0; i < firstPlace.length; i++) {
-    const homeTeam = firstPlace[i];
-    let awayTeam = fourthPlace.find((team) => team.group !== homeTeam.group);
+  // 4. Generate matches using position pairs
+  positionPairs.forEach(([highPos, lowPos]) => {
+    const highGroup = [...positionGroups[highPos]];
+    const lowGroup = [...positionGroups[lowPos]];
 
-    // If no available 4th place team from another group, take any
-    if (!awayTeam && fourthPlace.length > 0) {
-      awayTeam = fourthPlace[0];
+    while (highGroup.length > 0 && lowGroup.length > 0) {
+      const homeTeam = highGroup.shift()!;
+      let awayTeam: Qualifier | null = null;
+
+      // Try to find opponent from different group
+      const differentGroupIndex = lowGroup.findIndex(
+        (t) => t.group !== homeTeam.group
+      );
+
+      if (differentGroupIndex >= 0) {
+        awayTeam = lowGroup.splice(differentGroupIndex, 1)[0];
+      } else if (lowGroup.length > 0) {
+        // Fallback to same group if necessary
+        awayTeam = lowGroup.shift()!;
+      }
+
+      if (homeTeam && awayTeam) {
+        matches.push({
+          id: `${roundName.toLowerCase().replaceAll(" ", "-")}-${
+            matches.length + 1
+          }`,
+          round: roundName,
+          home: homeTeam.player,
+          away: awayTeam.player,
+          homeScore: null,
+          awayScore: null,
+          completed: false,
+        });
+      }
     }
-
-    if (homeTeam && awayTeam) {
-      matches.push({
-        id: `${roundName.toLowerCase().replaceAll(" ", "-")}-${
-          matches.length + 1
-        }`,
-        round: roundName,
-        home: homeTeam.player,
-        away: awayTeam.player,
-        homeScore: null,
-        awayScore: null,
-        completed: false,
-      });
-
-      // Remove the used 4th place team
-      fourthPlace.splice(fourthPlace.indexOf(awayTeam), 1);
-    }
-  }
-
-  // Pair 2nd place teams with 3rd place teams from different groups
-  for (let i = 0; i < secondPlace.length; i++) {
-    const homeTeam = secondPlace[i];
-    let awayTeam = thirdPlace.find((team) => team.group !== homeTeam.group);
-
-    // If no available 3rd place team from another group, take any
-    if (!awayTeam && thirdPlace.length > 0) {
-      awayTeam = thirdPlace[0];
-    }
-
-    if (homeTeam && awayTeam) {
-      matches.push({
-        id: `${roundName.toLowerCase().replaceAll(" ", "-")}-${
-          matches.length + 1
-        }`,
-        round: roundName,
-        home: homeTeam.player,
-        away: awayTeam.player,
-        homeScore: null,
-        awayScore: null,
-        completed: false,
-      });
-
-      // Remove the used 3rd place team
-      thirdPlace.splice(thirdPlace.indexOf(awayTeam), 1);
-    }
-  }
+  });
 
   return matches;
 };
+
+// Helper function to check power of two
+const isPowerOfTwo = (n: number): boolean => {
+  return n > 0 && (n & (n - 1)) === 0;
+};
+//   const roundName = "Round of 16";
+
+//   // Categorize qualifiers by their group position
+//   const groupPositions: Record<string, Qualifier[]> = {
+//     first: [], // Group winners (1st place)
+//     second: [], // Runners-up (2nd place)
+//     third: [], // 3rd place
+//     fourth: [], // 4th place
+//   };
+
+//   // Sort teams into their group positions
+//   qualifiers.forEach((team) => {
+//     if (team.position === 1) groupPositions.first.push(team);
+//     else if (team.position === 2) groupPositions.second.push(team);
+//     else if (team.position === 3) groupPositions.third.push(team);
+//     else if (team.position === 4) groupPositions.fourth.push(team);
+//   });
+
+//   // Sort each category by performance (pts > GD > GF)
+//   const sortTeams = (teams: Qualifier[]) =>
+//     [...teams].sort((a, b) => b.pts - a.pts || b.gd - a.gd || b.gf - a.gf);
+
+//   const firstPlace = sortTeams(groupPositions.first);
+//   const secondPlace = sortTeams(groupPositions.second);
+//   const thirdPlace = sortTeams(groupPositions.third);
+//   const fourthPlace = sortTeams(groupPositions.fourth);
+
+//   const matches: KnockoutMatch[] = [];
+
+//   // Pair 1st place teams with 4th place teams from different groups
+//   for (let i = 0; i < firstPlace.length; i++) {
+//     const homeTeam = firstPlace[i];
+//     let awayTeam = fourthPlace.find((team) => team.group !== homeTeam.group);
+
+//     // If no available 4th place team from another group, take any
+//     if (!awayTeam && fourthPlace.length > 0) {
+//       awayTeam = fourthPlace[0];
+//     }
+
+//     if (homeTeam && awayTeam) {
+//       matches.push({
+//         id: `${roundName.toLowerCase().replaceAll(" ", "-")}-${
+//           matches.length + 1
+//         }`,
+//         round: roundName,
+//         home: homeTeam.player,
+//         away: awayTeam.player,
+//         homeScore: null,
+//         awayScore: null,
+//         completed: false,
+//       });
+
+//       // Remove the used 4th place team
+//       fourthPlace.splice(fourthPlace.indexOf(awayTeam), 1);
+//     }
+//   }
+
+//   // Pair 2nd place teams with 3rd place teams from different groups
+//   for (let i = 0; i < secondPlace.length; i++) {
+//     const homeTeam = secondPlace[i];
+//     let awayTeam = thirdPlace.find((team) => team.group !== homeTeam.group);
+
+//     // If no available 3rd place team from another group, take any
+//     if (!awayTeam && thirdPlace.length > 0) {
+//       awayTeam = thirdPlace[0];
+//     }
+
+//     if (homeTeam && awayTeam) {
+//       matches.push({
+//         id: `${roundName.toLowerCase().replaceAll(" ", "-")}-${
+//           matches.length + 1
+//         }`,
+//         round: roundName,
+//         home: homeTeam.player,
+//         away: awayTeam.player,
+//         homeScore: null,
+//         awayScore: null,
+//         completed: false,
+//       });
+
+//       // Remove the used 3rd place team
+//       thirdPlace.splice(thirdPlace.indexOf(awayTeam), 1);
+//     }
+//   }
+
+//   return matches;
+// };
 
 export const getQualifiers = (
   groupStandings: GroupStandings,

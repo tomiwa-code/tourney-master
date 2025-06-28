@@ -61,38 +61,47 @@ const DynamicPageWrapper = ({ slug }: { slug: string }) => {
       tournamentData.numOfQualifier
     );
 
-    const knockoutDrawn = drawKnockoutRound(qualifiers);
+    try {
+      const knockoutDrawn = drawKnockoutRound(qualifiers, 2);
+      if (!knockoutDrawn) {
+        toast.error("Failed to draw knockout round");
+        return;
+      }
 
-    if (!knockoutDrawn) {
-      toast.error("Failed to draw knockout round");
-      return;
+      if (knockoutDrawn.length === 0) {
+        toast.error("No matches drawn for knockout round");
+        return;
+      }
+
+      const isRoundOf32 = knockoutDrawn.length === 16;
+      const isRoundOf16 = knockoutDrawn.length === 8;
+      const isQuarterFinal = knockoutDrawn.length === 4;
+      const isSemiFinal = knockoutDrawn.length === 2;
+
+      const updatedTournamentData: TournamentDataType = {
+        ...tournamentData,
+        knockoutStages: {
+          roundOf32: isRoundOf32 ? knockoutDrawn : [],
+          roundOf16: isRoundOf16 ? knockoutDrawn : [],
+          quarterFinals: isQuarterFinal ? knockoutDrawn : [],
+          semiFinals: isSemiFinal ? knockoutDrawn : [],
+          finals: [],
+        },
+        status: "knockout",
+        knockoutDrawn: true,
+      };
+
+      localStorage.setItem(
+        `tourney-master-${slug}`,
+        JSON.stringify(updatedTournamentData)
+      );
+
+      toast.success("Knockout round drawn successfully");
+      setTournamentData(updatedTournamentData);
+      setActiveTab("knockout");
+    } catch (err) {
+      toast.error(`${err}`);
     }
-
-    if (knockoutDrawn.length === 0) {
-      toast.error("No matches drawn for knockout round");
-      return;
-    }
-
-    const updatedTournamentData: TournamentDataType = {
-      ...tournamentData,
-      knockoutStages: {
-        roundOf16: knockoutDrawn,
-        quarterFinals: [],
-        semiFinals: [],
-        finals: [],
-      },
-      status: "knockout",
-      knockoutDrawn: true,
-    };
-
-    localStorage.setItem(
-      `tourney-master-${slug}`,
-      JSON.stringify(updatedTournamentData)
-    );
-
-    toast.success("Knockout round drawn successfully");
-    setTournamentData(updatedTournamentData);
-    setActiveTab("knockout");
   }, [tournamentData, completionStatus, slug]);
 
   // FETCH TOURNAMENT DATA

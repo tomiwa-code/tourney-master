@@ -12,7 +12,11 @@ import BracketRound from "./BracketRound";
 interface BracketConnectionsProps {
   matchResults: MatchResultsType;
   KnockoutStages: KnockoutStages;
-  getWinner: (round: RoundsType, matchId: string) => KnockoutMatch;
+  getWinner: (
+    round: RoundsType,
+    matchId: string,
+    currentRound: KnockoutMatch
+  ) => KnockoutMatch;
   handleScoreChange: (
     e: React.ChangeEvent<HTMLInputElement>,
     matchId: string,
