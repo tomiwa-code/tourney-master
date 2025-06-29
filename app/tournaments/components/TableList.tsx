@@ -12,7 +12,7 @@ import {
 import { TournamentDataType } from "@/types/tournament.type";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Trash } from "lucide-react";
+import { Pencil, Trash } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -27,6 +27,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import EditTournamentModal from "./EditTournamentModal";
 
 const tableHeadClass = "text-gray-300";
 const cellStyle = "capitalize h-14 text-center";
@@ -44,9 +45,9 @@ const TableList = ({
 }: TableListProps) => {
   const [openDeleteModal, setOpenDeleteModal] = React.useState(false);
   const [aboutToDelete, setAboutToDelete] = React.useState<string | null>(null);
-  // const [openEditModal, setOpenEditModal] = React.useState(false);
-  // const [activeTournament, setActiveTournament] =
-  //   React.useState<TournamentDataType | null>(null);
+  const [openEditModal, setOpenEditModal] = React.useState(false);
+  const [activeTournament, setActiveTournament] =
+    React.useState<TournamentDataType | null>(null);
 
   const handleDelete = (slug: string) => {
     localStorage.removeItem(`tourney-master-${slug}`);
@@ -60,10 +61,10 @@ const TableList = ({
     toast.success(`Tournament ${slug} deleted successfully!`);
   };
 
-  // const handleEdit = (tournament: TournamentDataType) => {
-  //   setActiveTournament(tournament);
-  //   setOpenEditModal(true);
-  // };
+  const handleEdit = (tournament: TournamentDataType) => {
+    setActiveTournament(tournament);
+    setOpenEditModal(true);
+  };
 
   return (
     <>
@@ -133,6 +134,21 @@ const TableList = ({
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
+                        onClick={() => handleEdit(data)}
+                        className="bg-white text-dark rounded-lg hover:bg-gray-200"
+                        size={"icon"}
+                      >
+                        <Pencil />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Edit tournament</p>
+                    </TooltipContent>
+                  </Tooltip>
+
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
                         onClick={() => {
                           setOpenDeleteModal(true);
                           setAboutToDelete(slug);
@@ -185,6 +201,17 @@ const TableList = ({
           </DialogHeader>
         </DialogContent>
       </Dialog>
+
+      {activeTournament && (
+        <Dialog open={openEditModal} onOpenChange={setOpenEditModal}>
+          <EditTournamentModal
+            setActiveTournament={setActiveTournament}
+            tournamentData={activeTournament}
+            onClose={() => setOpenEditModal(false)}
+            setTournaments={setTournaments}
+          />
+        </Dialog>
+      )}
     </>
   );
 };

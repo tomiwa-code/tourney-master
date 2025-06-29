@@ -1,8 +1,5 @@
 export type groupType = {
-  A: string[];
-  B: string[];
-  C: string[];
-  D: string[];
+  [key: string]: string[];
 };
 
 export type DistributionMethod = "random" | "custom";

@@ -28,7 +28,7 @@ const DynamicPageWrapper = ({ slug }: { slug: string }) => {
   const [tournamentData, setTournamentData] =
     React.useState<TournamentDataType | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
-  const [openModal, setOpenModal] = React.useState(true);
+  const [openModal, setOpenModal] = React.useState(false);
 
   // CHECK GROUP STAGE COMPLETION
   const completionStatus: CheckGroupStageCompletionRes = React.useMemo(() => {
