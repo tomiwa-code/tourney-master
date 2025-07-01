@@ -8,7 +8,7 @@ import {
   TournamentDataType,
 } from "@/types/tournament.type";
 import React from "react";
-import DsFixtureCard from "./FixtureCard";
+import FixtureCard from "./FixtureCard";
 import { toast } from "sonner";
 import BracketConnections from "./BracketConnections";
 
@@ -41,7 +41,11 @@ const KnockoutStage = ({
   } | null>(null);
 
   // Check if the initial round is 32 or 16
-  const isRoundOf16 = tournamentData.knockoutStages.roundOf32 ? false : true;
+  const isRoundOf16 =
+    tournamentData.knockoutStages.roundOf32 &&
+    tournamentData.knockoutStages.roundOf32.length > 0
+      ? false
+      : true;
 
   // Extract rounds from knockout stages
   const { roundOf32, roundOf16, finals } = knockoutStages;
@@ -256,7 +260,7 @@ const KnockoutStage = ({
           return (
             <div className="flex items-center gap-x-2" key={idx}>
               <div className="flex flex-col gap-y-2">
-                <DsFixtureCard
+                <FixtureCard
                   team={home ?? ""}
                   onScoreChange={(e, leg) =>
                     handleScoreChange(e, id, true, leg ?? "first")
@@ -267,7 +271,7 @@ const KnockoutStage = ({
                   homeAway
                 />
 
-                <DsFixtureCard
+                <FixtureCard
                   team={away ?? ""}
                   onScoreChange={(e, leg) =>
                     handleScoreChange(e, id, false, leg ?? "first")

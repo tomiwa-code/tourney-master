@@ -94,6 +94,7 @@ const TableList = ({ startIdx }: TableListProps) => {
               groups,
               distribution,
               totalPlayer,
+              knockoutType,
             } = data;
             const id = slug.split("-")[1];
 
@@ -106,7 +107,11 @@ const TableList = ({ startIdx }: TableListProps) => {
                 <TableCell
                   className={`${cellStyle} text-primary/90 font-medium hover:text-gray-400 duration-300 text-left`}
                 >
-                  <Link href={`/tournament/${slug}`}>
+                  <Link
+                    href={`/${
+                      knockoutType ? "knockout" : "tournament"
+                    }/${slug}`}
+                  >
                     {name.replaceAll("-", " ")}
                   </Link>
                 </TableCell>
@@ -120,7 +125,7 @@ const TableList = ({ startIdx }: TableListProps) => {
                   {distribution ?? "null"}
                 </TableCell>
                 <TableCell className={`${cellStyle}`}>
-                  {Object.values(groups).length}
+                  {groups ? Object.values(groups).length : 0}
                 </TableCell>
                 <TableCell className={`${cellStyle}`}>
                   {totalPlayer ?? "null"}

@@ -27,6 +27,7 @@ export type TournamentDataType = {
   knockoutDrawn: boolean;
   createdAt: string;
   updatedAt: string;
+  knockoutType?: KnockoutType;
 };
 
 // Add these types
@@ -135,8 +136,12 @@ export type CreateTournamentFormDataType = {
   playerInput: string;
   qualifier: string;
   gameType: string;
+  knockoutType: KnockoutType;
+  knockoutPlayerNames: string;
 };
 
 export type EditNamesType = {
-  [groupId: string]: { [idx: number]: { oldName: string; newName: string } }
+  [groupId: string]: { [idx: number]: { oldName: string; newName: string } };
 };
+
+export type KnockoutType = "round-of-16" | "round-of-32" | "quarter-finals";

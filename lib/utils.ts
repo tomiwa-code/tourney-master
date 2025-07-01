@@ -1098,3 +1098,97 @@ export const getAndSortTournaments = (prefix: string): TournamentDataType[] => {
 
   return sortData;
 };
+
+export const drawKnockoutBracket = (players: string[]) => {
+  const isPowerOfTwo = (n: number): boolean => {
+    return n > 0 && (n & (n - 1)) === 0;
+  };
+
+  if (!isPowerOfTwo(players.length)) {
+    toast.error("Number of players must be a power of 2 (e.g., 2, 4, 8, 16)");
+    return null;
+  }
+
+  // Helper function to shuffle array (optional)
+  const shuffleArray = (array: string[]) => {
+    const newArray = [...array];
+    for (let i = newArray.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+    }
+    return newArray;
+  };
+
+  // Create matches for each round
+  const createMatches = (
+    participants: string[],
+    roundName: string
+  ): KnockoutMatch[] => {
+    const matches: KnockoutMatch[] = [];
+    for (let i = 0; i < participants.length; i += 2) {
+      matches.push({
+        id: `${roundName}-${i / 2 + 1}`,
+        round: roundName,
+        home: participants[i],
+        away: participants[i + 1],
+        homeScore: null,
+        awayScore: null,
+        completed: false,
+      });
+    }
+    return matches;
+  };
+
+  // Shuffle players for random pairing (optional)
+  const shuffledPlayers = shuffleArray(players);
+
+  // Determine the knockout structure based on number of players
+  const knockoutStages: {
+    roundOf32?: KnockoutMatch[];
+    roundOf16?: KnockoutMatch[];
+    quarterFinals?: KnockoutMatch[];
+    semiFinals?: KnockoutMatch[];
+    finals?: KnockoutMatch[];
+  } = {};
+
+  switch (players.length) {
+    case 2:
+      knockoutStages.finals = createMatches(shuffledPlayers, "Finals");
+      break;
+    case 4:
+      knockoutStages.semiFinals = createMatches(shuffledPlayers, "Semi-Finals");
+      break;
+    case 8:
+      knockoutStages.quarterFinals = createMatches(
+        shuffledPlayers,
+        "Quarter-Finals"
+      );
+      break;
+    case 16:
+      knockoutStages.roundOf16 = createMatches(shuffledPlayers, "round-of-16");
+      break;
+    case 32:
+      knockoutStages.roundOf32 = createMatches(shuffledPlayers, "round-of-32");
+      break;
+    default:
+      // For other power-of-two numbers (unlikely in most tournaments)
+      const roundNames = [
+        "Finals",
+        "Semi Finals",
+        "Quarter Finals",
+        "Round of 16",
+        "Round of 32",
+        "Round of 64",
+      ];
+      let roundIndex = Math.log2(players.length) - 1;
+      const roundName = roundNames[roundIndex] || `Round of ${players.length}`;
+      (knockoutStages as Record<string, KnockoutMatch[]>)[
+        `roundOf${players.length}`
+      ] = createMatches(shuffledPlayers, roundName);
+  }
+
+  return {
+    ...knockoutStages,
+    knockoutDrawn: true,
+  };
+};

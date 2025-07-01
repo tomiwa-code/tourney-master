@@ -9,6 +9,7 @@ import {
 } from "@/lib/validation";
 import {
   distributePlayers,
+  drawKnockoutBracket,
   generateGroupFixtures,
   initializeStandings,
   splitPlayerNames,
@@ -33,7 +34,10 @@ const CreateWrapper = () => {
     playerInput: "",
     qualifier: "4",
     distribution: "random", // 'random' or 'custom'
+    knockoutType: "round-of-16", // 'round-of-16', 'round-of-32', etc.
+    knockoutPlayerNames: "",
   });
+  const [isDisabled, setIsDisabled] = React.useState(false);
 
   const router = useRouter();
 
@@ -144,11 +148,80 @@ const CreateWrapper = () => {
         JSON.stringify(tournamentData)
       );
 
+      setIsDisabled(true);
       toast.success("Tournament created successfully!");
       router.push(`/tournament/${slug}`);
     } catch (error) {
       toast.error(`${error}`);
     }
+  };
+
+  const handleCreateKnockout = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const { tournamentName, knockoutType, knockoutPlayerNames } = formData;
+
+    if (!tournamentName.trim()) {
+      toast.error("Tournament name is required");
+      return;
+    }
+
+    if (!knockoutPlayerNames.trim()) {
+      toast.error("Player names for knockout stage are required");
+      return;
+    }
+
+    const playerNamesArray = splitPlayerNames(knockoutPlayerNames);
+
+    const maxPlayers =
+      knockoutType === "round-of-16"
+        ? 16
+        : knockoutType === "round-of-32"
+        ? 32
+        : 8;
+
+    if (playerNamesArray.length > maxPlayers) {
+      toast.error(`Player names exceed the maximum limit of ${maxPlayers}`);
+      return;
+    }
+
+    const drawKnockout = drawKnockoutBracket(playerNamesArray);
+    if (!drawKnockout) return;
+
+    const slug = `${tournamentName
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, "-")}-${Math.random().toString(36).substring(2, 8)}`;
+
+    const tournamentData = {
+      slug,
+      name: tournamentName.trim(),
+      numOfQualifier: 0, // Not applicable for knockout
+      distribution: "random",
+      totalPlayer: maxPlayers,
+      playersPerGroup: 0, // Not applicable for knockout
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      status: "knockout", // can be 'group-stage', 'knockout', 'completed'
+      knockoutType,
+      knockoutDrawn: drawKnockout.knockoutDrawn,
+      knockoutStages: {
+        roundOf32: knockoutType === "round-of-32" ? drawKnockout.roundOf32 : [],
+        roundOf16: knockoutType === "round-of-16" ? drawKnockout.roundOf16 : [],
+        quarterFinals:
+          knockoutType === "quarter-finals" ? drawKnockout.quarterFinals : [],
+        semiFinals: [],
+        finals: [],
+      },
+    };
+
+    localStorage.setItem(
+      `tourney-master-${slug}`,
+      JSON.stringify(tournamentData)
+    );
+    setIsDisabled(true);
+    toast.success("Knockout tournament created successfully!");
+    router.push(`/knockout/${slug}`);
   };
 
   return (
@@ -160,7 +233,9 @@ const CreateWrapper = () => {
         formData={formData}
         handleChange={handleChange}
         handleSubmit={handleSubmit}
+        handleCreateKnockout={handleCreateKnockout}
         handleSelectChange={handleSelectChange}
+        isDisabled={isDisabled}
       />
     </div>
   );

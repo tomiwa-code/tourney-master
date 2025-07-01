@@ -57,7 +57,7 @@ const TournamentsPageWrapper = () => {
   };
 
   React.useEffect(() => {
-    const data = getAndSortTournaments("tourney-master-monarchs-");
+    const data = getAndSortTournaments("tourney-master-");    
 
     setOriginalTournamentList(data);
     updatePageData(1, data);

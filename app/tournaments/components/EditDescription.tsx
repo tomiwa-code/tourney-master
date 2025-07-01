@@ -5,6 +5,8 @@ interface EditDescriptionProps {
   tournamentData: TournamentDataType;
 }
 
+const valueStyle = "font-medium text-gray-300";
+const labelStyle = "text-gray-400 text-sm";
 const EditDescription = ({ tournamentData }: EditDescriptionProps) => {
   const {
     slug,
@@ -19,38 +21,40 @@ const EditDescription = ({ tournamentData }: EditDescriptionProps) => {
 
   return (
     <>
-      <span>
-        id: <span className="font-semibold">{slug.split("-")[1]}</span>
+      <span className={`${labelStyle}`}>
+        id: <span className={`${valueStyle}`}>{slug.split("-")[1]}</span>
       </span>
 
-      <span>
-        name: <span className="font-semibold">{name}</span>
+      <span className={`${labelStyle}`}>
+        name: <span className={`${valueStyle}`}>{name}</span>
       </span>
 
-      <span>
-        distribution: <span className="font-semibold">{distribution}</span>
+      <span className={`${labelStyle}`}>
+        distribution: <span className={`${valueStyle}`}>{distribution}</span>
       </span>
 
-      <span>
-        status: <span className="font-semibold">{status}</span>
+      <span className={`${labelStyle}`}>
+        status: <span className={`${valueStyle}`}>{status}</span>
       </span>
 
-      <span>
+      <span className={`${labelStyle}`}>
         groups:{" "}
-        <span className="font-semibold">{Object.values(groups).length}</span>
+        <span className={`${valueStyle}`}>
+          {groups ? Object.values(groups).length : 0}
+        </span>
       </span>
 
-      <span>
+      <span className={`${labelStyle}`}>
         players per group:{" "}
-        <span className="font-semibold">{playersPerGroup}</span>
+        <span className={`${valueStyle}`}>{playersPerGroup}</span>
       </span>
 
-      <span>
-        total players: <span className="font-semibold">{totalPlayer}</span>
+      <span className={`${labelStyle}`}>
+        total players: <span className={`${valueStyle}`}>{totalPlayer}</span>
       </span>
 
-      <span>
-        qualifiers: <span className="font-semibold">{numOfQualifier}</span>
+      <span className={`${labelStyle}`}>
+        qualifiers: <span className={`${valueStyle}`}>{numOfQualifier}</span>
       </span>
     </>
   );
