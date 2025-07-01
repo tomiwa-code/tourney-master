@@ -1180,7 +1180,7 @@ export const drawKnockoutBracket = (players: string[]) => {
         "Round of 32",
         "Round of 64",
       ];
-      let roundIndex = Math.log2(players.length) - 1;
+      const roundIndex = Math.log2(players.length) - 1;
       const roundName = roundNames[roundIndex] || `Round of ${players.length}`;
       (knockoutStages as Record<string, KnockoutMatch[]>)[
         `roundOf${players.length}`
