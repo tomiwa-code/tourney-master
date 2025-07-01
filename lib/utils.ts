@@ -1,8 +1,10 @@
 import {
   CheckGroupStageCompletionRes,
   DistributionMethod,
+  EditNamesType,
   GroupFixtures,
   GroupStandings,
+  groupType,
   KnockoutMatch,
   MatchFixture,
   PlayerMatchRecord,
@@ -1009,3 +1011,90 @@ export const roundNameMap: Record<string, string> = {
 export const reverseRoundNameMap = Object.fromEntries(
   Object.entries(roundNameMap).map(([key, value]) => [value, key])
 );
+
+export const updateGroupStandingsTeamName = (
+  groupId: string,
+  slug: string,
+  initialGroups: groupType,
+  editedNames: EditNamesType
+) => {
+  const tournaments: TournamentDataType = getTournamentData(slug);
+  if (!tournaments) {
+    toast.error("Tournament data not found");
+    return;
+  }
+
+  const updatedGroupStanding = tournaments.groupStandings[groupId].map(
+    (team, playerIdx) => {
+      const player =
+        team.player !== initialGroups[groupId][playerIdx]
+          ? initialGroups[groupId][playerIdx]
+          : team.player;
+
+      const matches = team.matches.map((match) => {
+        const findMatch = Object.values(editedNames[groupId]).filter(
+          (name) =>
+            name.oldName.replaceAll(",", "") ===
+            match.opponent.replaceAll(",", "")
+        );
+
+        if (findMatch.length === 0) return match;
+
+        return {
+          ...match,
+          opponent:
+            findMatch.length > 0 ? findMatch[0].newName : match.opponent,
+        };
+      });
+
+      return {
+        ...team,
+        player,
+        matches,
+      };
+    }
+  );
+
+  return updatedGroupStanding;
+};
+
+export const updateGroupFixturesTeamName = (
+  groupId: string,
+  slug: string,
+  editedNames: EditNamesType
+) => {
+  const tournaments = getTournamentData(slug);
+  if (!tournaments) {
+    toast.error("Tournament data not found");
+    return;
+  }
+
+  const updatedFixtures = tournaments.groupFixtures[groupId]?.map(
+    (fixture: MatchFixture) => {
+      const findFixture = fixture.players.map((player) => {
+        const editedName = Object.values(editedNames[groupId]).find((name) => {
+          return (
+            name.oldName.replaceAll(",", "") === player.replaceAll(",", "")
+          );
+        });
+        return editedName ? editedName.newName : player;
+      });
+
+      if (!findFixture) return fixture;
+      return {
+        ...fixture,
+        players: findFixture,
+      };
+    }
+  );
+
+  return updatedFixtures;
+};
+
+export const getAndSortTournaments = (prefix: string): TournamentDataType[] => {
+  const tournaments = getItemsStartingWith<TournamentDataType>(prefix);
+  const values = Object.values(tournaments);
+  const sortData = sortByDate(values, "createdAt");
+
+  return sortData;
+};

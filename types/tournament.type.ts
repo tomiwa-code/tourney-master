@@ -136,3 +136,7 @@ export type CreateTournamentFormDataType = {
   qualifier: string;
   gameType: string;
 };
+
+export type EditNamesType = {
+  [groupId: string]: { [idx: number]: { oldName: string; newName: string } }
+};

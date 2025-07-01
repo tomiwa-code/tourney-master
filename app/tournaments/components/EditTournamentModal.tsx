@@ -8,310 +8,107 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  groupType,
-  MatchFixture,
-  PlayerStats,
-  TournamentDataType,
-} from "@/types/tournament.type";
-import { Input } from "@/components/ui/input";
+import { TournamentDataType } from "@/types/tournament.type";
 import { Button } from "@/components/ui/button";
-import { Check, X } from "lucide-react";
-import { toast } from "sonner";
-import { getTournamentData } from "@/lib/utils";
+import { Pencil } from "lucide-react";
+import EditGroup from "./EditGroup";
+import EditDescription from "./EditDescription";
+import EditKnockout from "./EditKnockout";
 
 interface EditTournamentModalProps {
-  tournamentData: TournamentDataType;
+  activeTournamentData: TournamentDataType;
   onClose: () => void;
-  setTournaments: React.Dispatch<React.SetStateAction<TournamentDataType[]>>;
-  setActiveTournament: React.Dispatch<
+  setActiveTournamentData: React.Dispatch<
     React.SetStateAction<TournamentDataType | null>
   >;
 }
 
 const EditTournamentModal = ({
-  tournamentData,
+  activeTournamentData,
   onClose,
-  setActiveTournament,
-  setTournaments,
+  setActiveTournamentData,
 }: EditTournamentModalProps) => {
-  const {
-    slug,
-    name,
-    distribution,
-    status,
-    groups,
-    playersPerGroup,
-    totalPlayer,
-    numOfQualifier,
-  } = tournamentData;
+  const { slug, name, groups, status } = activeTournamentData;
 
-  const [initialGroups, setInitialGroups] = React.useState<groupType>(groups);
-
-  const handleChangeTeamName = (
-    groupId: string,
-    playerIdx: number,
-    newName: string
-  ) => {
-    const updatedGroup = initialGroups[groupId].map((player, idx) =>
-      idx === playerIdx ? newName : player
-    );
-    const updatedGroups = {
-      ...initialGroups,
-      [groupId]: updatedGroup,
-    };
-    setInitialGroups(updatedGroups);
-  };
-
-  const resetPlayerName = (groupId: string, playerIdx: number) => {
-    const originalName = groups[groupId][playerIdx];
-    const updatedGroup = initialGroups[groupId].map((player, idx) =>
-      idx === playerIdx ? originalName : player
-    );
-    const updatedGroups = {
-      ...initialGroups,
-      [groupId]: updatedGroup,
-    };
-    setInitialGroups(updatedGroups);
-    toast.success(`Player name reset to ${originalName}`);
-  };
-
-  const saveChanges = (groupId: string, playerIdx: number) => {
-    // Get current tournament data
-    const tournaments = getTournamentData(slug);
-    if (!tournaments) {
-      toast.error("Tournament data not found");
-      return;
-    }
-
-    // Get the new player name
-    const newName = initialGroups[groupId][playerIdx];
-
-    // 1. Update the groups data
-    const updatedGroupsData = {
-      ...tournaments.groups,
-      [groupId]: tournaments.groups[groupId].map(
-        (player: PlayerStats, idx: number) =>
-          idx === playerIdx ? newName : player
-      ),
-    };
-
-    // 2. Update group standings (if they exist)
-    let updatedStandings = tournaments.groupStandings;
-    if (tournaments.groupStandings && tournaments.groupStandings[groupId]) {
-      updatedStandings = {
-        ...tournaments.groupStandings,
-        [groupId]: tournaments.groupStandings[groupId].map(
-          (player: PlayerStats) => {
-            if (player.player === groups[groupId][playerIdx]) {
-              return {
-                ...player,
-                player: newName,
-                // Update opponent names in matches if needed
-                matches: player.matches?.map((match) => ({
-                  ...match,
-                  opponent:
-                    match.opponent === groups[groupId][playerIdx]
-                      ? newName
-                      : match.opponent,
-                })),
-              };
-            }
-            return player;
-          }
-        ),
-      };
-    }
-
-    // 3. Update group fixtures (if they exist)
-    let updatedFixtures = tournaments.groupFixtures;
-    if (tournaments.groupFixtures && tournaments.groupFixtures[groupId]) {
-      updatedFixtures = {
-        ...tournaments.groupFixtures,
-        [groupId]: tournaments.groupFixtures[groupId].map(
-          (fixture: MatchFixture) => ({
-            ...fixture,
-            players: fixture.players.map((player) =>
-              player === groups[groupId][playerIdx] ? newName : player
-            ),
-          })
-        ),
-      };
-    }
-
-    // Create the fully updated tournament
-    const updatedTournament = {
-      ...tournaments,
-      groups: updatedGroupsData,
-      groupStandings: updatedStandings,
-      groupFixtures: updatedFixtures,
-      updatedAt: new Date().toISOString(),
-    };
-
-    // Save to localStorage
-    localStorage.setItem(
-      `tourney-master-${slug}`,
-      JSON.stringify(updatedTournament)
-    );
-
-    // Update state
-    setActiveTournament(updatedTournament);
-    setTournaments((prev) =>
-      prev.map((tournament) =>
-        tournament.slug === slug ? updatedTournament : tournament
-      )
-    );
-
-    toast.success("Player name updated successfully!");
-  };
-
-  //   const saveChanges = (groupId: string, playerIdx: number) => {
-  //     const tournaments = getTournamentData(slug);
-  //     if (!tournaments) {
-  //       toast.error("Tournament data not found");
-  //       return;
-  //     }
-
-  //     const updatedGroup = initialGroups[groupId].map((player, idx) =>
-  //       idx !== playerIdx ? player : initialGroups[groupId][playerIdx]
-  //     );
-
-  //     // update the group standing
-  //     const standings = tournaments.groupStandings[groupId].map(
-  //       (player: PlayerStats, idx: number) => {
-  //         if (idx === playerIdx) {
-  //           return { ...player, name: updatedGroup[playerIdx] };
-  //         }
-  //         return player;
-  //       }
-  //     );
-
-  //     console.log("updatedGroup:", updatedGroup);
-
-  //     console.log("Current Group Standings:", standings);
-
-  //     // .map(
-  //     //   (player, idx) =>
-  //     //     idx === playerIdx ? { ...player, name: newName } : player
-  //     // );
-
-  //     const updatedGroupStandings = {
-  //       ...tournaments.groupStandings,
-  //       [groupId]: {
-  //         ...tournaments.groupStandings[groupId],
-  //         players: updatedGroup,
-  //       },
-  //     };
-
-  //     // console.log("Updated Group Standings:", updatedGroupStandings);
-
-  //     const updatedGroups = {
-  //       ...tournaments,
-  //       groups: {
-  //         ...tournaments.groups,
-  //         [groupId]: updatedGroup,
-  //       },
-  //     };
-
-  //     // Save to localStorage
-  //     // localStorage.setItem(
-  //     //   `tourney-master-${slug}`,
-  //     //   JSON.stringify(updatedGroups)
-  //     // );
-  //     // onClose();
-  //     // setActiveTournament(null);
-  //     // setTournaments((prev) =>
-  //     //   prev.map((tournament) =>
-  //     //     tournament.slug === slug ? updatedGroups : tournament
-  //     //   )
-  //     // );
-  //     toast.success("Player names updated successfully!");
-  //   };
+  const [activeEdit, setActiveEdit] = React.useState<"group" | "knockout">(
+    "group"
+  );
 
   return (
-    <DialogContent className="w-full mx-auto !max-w-2xl bg-dark-300 outline-0 border-0 h-[95vh] overflow-y-auto">
+    <DialogContent className="w-full mx-auto !max-w-2xl bg-dark-300 outline-0 border-0 min-h-[55vh] overflow-y-auto">
       <DialogHeader>
         <DialogTitle className="capitalize text-white">
           Editing {name}
         </DialogTitle>
         <DialogDescription className="text-gray-300 capitalize grid grid-cols-3 gap-4 mt-2">
-          <span>
-            id: <span className="font-semibold">{slug.split("-")[1]}</span>
-          </span>
-
-          <span>
-            name: <span className="font-semibold">{name}</span>
-          </span>
-          <span>
-            distribution: <span className="font-semibold">{distribution}</span>
-          </span>
-          <span>
-            status: <span className="font-semibold">{status}</span>
-          </span>
-          <span>
-            groups:{" "}
-            <span className="font-semibold">
-              {Object.values(groups).length}
-            </span>
-          </span>
-          <span>
-            players per group:{" "}
-            <span className="font-semibold">{playersPerGroup}</span>
-          </span>
-          <span>
-            total players: <span className="font-semibold">{totalPlayer}</span>
-          </span>
-          <span>
-            qualifiers: <span className="font-semibold">{numOfQualifier}</span>
-          </span>
+          <EditDescription tournamentData={activeTournamentData} />
         </DialogDescription>
 
-        <div className="mt-4 grid grid-cols-2 gap-4">
-          {Object.entries(initialGroups).map(([groupName, groupData]) => {
-            return (
-              <div key={groupName} className="flex flex-col gap-y-2">
-                <h3 className="text-lg text-gray-200 font-semibold capitalize">
-                  {groupName}
-                </h3>
+        {activeEdit === "group" && (
+          <>
+            {status !== "group-stage" ? (
+              <div className="flex flex-col gap-y-2 min-h-40 mt-14 w-full items-center justify-center max-w-lg mx-auto">
+                <h2 className="text-gray-300 font-medium text-lg">
+                  Group stage edit not available
+                </h2>
 
-                {groupData.map((player, idx) => (
-                  <div className="flex items-center" key={idx}>
-                    <Input
-                      value={player}
-                      onChange={(e) =>
-                        handleChangeTeamName(groupName, idx, e.target.value)
-                      }
-                      autoFocus={false}
-                      className="border-gray-500 text-white"
-                    />
-
-                    {groups[groupName][idx] !== player && (
-                      <div className="flex items-center">
-                        <Button
-                          size={"icon"}
-                          variant={"ghost"}
-                          onClick={() => resetPlayerName(groupName, idx)}
-                        >
-                          <X className="text-red" />
-                        </Button>
-
-                        <Button
-                          size={"icon"}
-                          variant={"ghost"}
-                          onClick={() => saveChanges(groupName, idx)}
-                        >
-                          <Check className="text-emerald-500" />
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                ))}
+                <p className="text-gray-400 text-sm text-center">
+                  This tournament is currently in the {status} stage and cannot
+                  be edited. Group stage edits are only available during the
+                  group stage.
+                </p>
               </div>
-            );
-          })}
-        </div>
+            ) : (
+              <EditGroup
+                groups={groups}
+                slug={slug}
+                setActiveTournament={setActiveTournamentData}
+              />
+            )}
+          </>
+        )}
+
+        {activeEdit === "knockout" && (
+          <>
+            {status !== "knockout" ? (
+              <div className="flex flex-col gap-y-2 min-h-40 mt-14 w-full items-center justify-center max-w-lg mx-auto">
+                <h2 className="text-gray-300 font-medium text-lg">
+                  Knockout stage edit not available
+                </h2>
+
+                <p className="text-gray-400 text-sm text-center">
+                  This tournament is {status} and cannot be edited. Knockout
+                  stage edits are only available during the knockout stage.
+                </p>
+              </div>
+            ) : (
+              <EditKnockout tournamentData={activeTournamentData} />
+            )}
+          </>
+        )}
       </DialogHeader>
-      <DialogFooter>
+
+      <DialogFooter className="gap-x-8">
+        {activeEdit !== "group" ? (
+          <Button
+            variant={"ghost"}
+            onClick={() => setActiveEdit("group")}
+            className="capitalize h-12 w-28 font-medium text-gray-400"
+          >
+            <Pencil />
+            edit group
+          </Button>
+        ) : (
+          <Button
+            variant={"ghost"}
+            onClick={() => setActiveEdit("knockout")}
+            className="capitalize h-12 w-28 font-medium text-gray-400"
+          >
+            <Pencil />
+            edit knockout
+          </Button>
+        )}
+
         <Button
           onClick={onClose}
           className="capitalize bg-white h-12 w-28 hover:bg-dark-400 duration-300 hover:text-white font-medium"

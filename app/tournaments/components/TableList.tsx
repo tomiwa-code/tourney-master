@@ -28,26 +28,24 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import EditTournamentModal from "./EditTournamentModal";
+import { useTournaments } from "@/context/Tournament.context";
+import { getAndSortTournaments } from "@/lib/utils";
 
 const tableHeadClass = "text-gray-300";
 const cellStyle = "capitalize h-14 text-center";
 
 interface TableListProps {
-  tournaments: TournamentDataType[];
-  setTournaments: React.Dispatch<React.SetStateAction<TournamentDataType[]>>;
   startIdx: number;
 }
 
-const TableList = ({
-  tournaments,
-  startIdx,
-  setTournaments,
-}: TableListProps) => {
+const TableList = ({ startIdx }: TableListProps) => {
   const [openDeleteModal, setOpenDeleteModal] = React.useState(false);
   const [aboutToDelete, setAboutToDelete] = React.useState<string | null>(null);
   const [openEditModal, setOpenEditModal] = React.useState(false);
   const [activeTournament, setActiveTournament] =
     React.useState<TournamentDataType | null>(null);
+  const { setTournaments, setOriginalTournamentList, tournaments } =
+    useTournaments();
 
   const handleDelete = (slug: string) => {
     localStorage.removeItem(`tourney-master-${slug}`);
@@ -55,6 +53,9 @@ const TableList = ({
       (tournament) => tournament.slug !== slug
     );
 
+    setOriginalTournamentList((prev) =>
+      prev.filter((tournament) => tournament.slug !== slug)
+    );
     setTournaments(updatedTournaments);
     setOpenDeleteModal(false);
     setAboutToDelete(null);
@@ -202,13 +203,12 @@ const TableList = ({
         </DialogContent>
       </Dialog>
 
-      {activeTournament && (
+      {activeTournament && openEditModal && (
         <Dialog open={openEditModal} onOpenChange={setOpenEditModal}>
           <EditTournamentModal
-            setActiveTournament={setActiveTournament}
-            tournamentData={activeTournament}
+            setActiveTournamentData={setActiveTournament}
+            activeTournamentData={activeTournament}
             onClose={() => setOpenEditModal(false)}
-            setTournaments={setTournaments}
           />
         </Dialog>
       )}

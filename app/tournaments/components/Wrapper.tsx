@@ -5,18 +5,23 @@ import TourneyMasterLogo from "@/components/general/TourneyMasterLogo";
 import { Button } from "@/components/ui/button";
 import TableList from "./TableList";
 import { TournamentDataType } from "@/types/tournament.type";
-import { getItemsStartingWith, sortByDate } from "@/lib/utils";
+import {
+  getAndSortTournaments,
+  getItemsStartingWith,
+  sortByDate,
+} from "@/lib/utils";
 import GoBack from "@/components/general/GoBack";
 import Link from "next/link";
+import { useTournaments } from "@/context/Tournament.context";
 
 const itemsPerPage = 7;
 const TournamentsPageWrapper = () => {
-  const [originalTournamentList, setOriginalTournamentList] = React.useState<
-    TournamentDataType[]
-  >([]);
-  const [tournaments, setTournaments] = React.useState<TournamentDataType[]>(
-    []
-  );
+  const {
+    originalTournamentList,
+    setOriginalTournamentList,
+    tournaments,
+    setTournaments,
+  } = useTournaments();
   const [page, setPage] = React.useState(1);
 
   const totalPages = React.useMemo(() => {
@@ -56,14 +61,10 @@ const TournamentsPageWrapper = () => {
   };
 
   React.useEffect(() => {
-    const tournaments = getItemsStartingWith<TournamentDataType>(
-      "tourney-master-monarchs-"
-    );
-    const values = Object.values(tournaments);
-    const sortData = sortByDate(values, "createdAt");
+    const data = getAndSortTournaments("tourney-master-monarchs-");
 
-    setOriginalTournamentList(sortData);
-    updatePageData(1, sortData);
+    setOriginalTournamentList(data);
+    updatePageData(1, data);
   }, []);
 
   return (
@@ -100,11 +101,7 @@ const TournamentsPageWrapper = () => {
           </div>
 
           <div className="mt-10 py-5 px-6 w-full max-w-5xl h-[475px] bg-dark-300 rounded-2xl">
-            <TableList
-              tournaments={tournaments}
-              startIdx={itemsPerPage * (page - 1)}
-              setTournaments={setTournaments}
-            />
+            <TableList startIdx={itemsPerPage * (page - 1)} />
           </div>
 
           <div className="w-full max-w-5xl mt-8 flex items-center justify-between">

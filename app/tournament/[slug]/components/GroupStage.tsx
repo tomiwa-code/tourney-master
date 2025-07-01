@@ -9,7 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { TournamentDataType } from "@/types/tournament.type";
+import { PlayerStats, TournamentDataType } from "@/types/tournament.type";
 
 interface GroupStageProps {
   group: string;
@@ -18,14 +18,26 @@ interface GroupStageProps {
 }
 
 const tableHeadClass = "text-gray-300";
+const defaultPlayerStats: PlayerStats = {
+  player: "",
+  matches: [],
+  mp: 0,
+  w: 0,
+  d: 0,
+  l: 0,
+  gf: 0,
+  ga: 0,
+  gd: 0,
+  pts: 0,
+};
 
 const GroupStage = ({ group, teams, tournamentData }: GroupStageProps) => {
-  const getTeamStats = (group: string, teamName: string) => {
+  const getTeamStats = (group: string, teamName: string): PlayerStats => {
     const findTeam = tournamentData?.groupStandings[group].find(
       (team) => team.player === teamName
     );
 
-    return findTeam;
+    return findTeam ?? defaultPlayerStats;
   };
 
   const qualifier = tournamentData?.numOfQualifier ?? 4;
@@ -58,6 +70,7 @@ const GroupStage = ({ group, teams, tournamentData }: GroupStageProps) => {
         <TableBody>
           {teams.map((team, idx) => {
             const stats = getTeamStats(group, team)!;
+
             const { mp, w, d, l, gf, ga, gd, pts } = stats;
 
             return (
