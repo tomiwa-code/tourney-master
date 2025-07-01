@@ -29,7 +29,6 @@ import {
 import { toast } from "sonner";
 import EditTournamentModal from "./EditTournamentModal";
 import { useTournaments } from "@/context/Tournament.context";
-import { getAndSortTournaments } from "@/lib/utils";
 
 const tableHeadClass = "text-gray-300";
 const cellStyle = "capitalize h-14 text-center";

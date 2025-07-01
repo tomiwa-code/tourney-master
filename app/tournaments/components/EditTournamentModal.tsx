@@ -82,7 +82,10 @@ const EditTournamentModal = ({
                 </p>
               </div>
             ) : (
-              <EditKnockout tournamentData={activeTournamentData} />
+              <EditKnockout
+                tournamentData={activeTournamentData}
+                onClose={onClose}
+              />
             )}
           </>
         )}

@@ -5,36 +5,52 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { KnockoutMatch, TournamentDataType } from "@/types/tournament.type";
 import { toast } from "sonner";
+import { getTournamentData } from "@/lib/utils";
+import { useTournaments } from "@/context/Tournament.context";
 
 interface EditKnockoutProps {
   tournamentData: TournamentDataType;
+  onClose: () => void;
 }
 
-const EditKnockout = ({ tournamentData }: EditKnockoutProps) => {
-  const [editedMatches, setEditedMatches] = React.useState<KnockoutMatch[]>([]);
+const EditKnockout = ({ tournamentData, onClose }: EditKnockoutProps) => {
+  const [groupId, setGroupId] = React.useState<string>("");
+  const [isEdited, setIsEdited] = React.useState<boolean>(false);
+  const [knockoutMatches, setKnockoutMatches] = React.useState<KnockoutMatch[]>(
+    []
+  );
+  const { setTournaments, setOriginalTournamentList } = useTournaments();
 
-  const { knockoutStages } = tournamentData;
-  const knockoutArr =
-    knockoutStages?.roundOf32?.length && knockoutStages.roundOf32.length > 1
-      ? knockoutStages.roundOf32
-      : knockoutStages?.roundOf16?.length && knockoutStages.roundOf16.length > 1
-      ? knockoutStages.roundOf16
-      : knockoutStages?.quarterFinals?.length &&
-        knockoutStages.quarterFinals.length > 1
-      ? knockoutStages.quarterFinals
-      : knockoutStages?.semiFinals?.length &&
-        knockoutStages.semiFinals.length > 1
-      ? knockoutStages.semiFinals
-      : knockoutStages?.finals?.length
-      ? knockoutStages.finals
-      : [];
+  const { knockoutStages, slug } = tournamentData;
+
+  const knockoutFirstStage = React.useMemo((): KnockoutMatch[] => {
+    if (!knockoutStages) return [];
+
+    if (knockoutStages?.roundOf32 && knockoutStages.roundOf32.length > 0) {
+      setGroupId("roundOf32");
+      return knockoutStages.roundOf32;
+    }
+    if (knockoutStages?.roundOf16 && knockoutStages.roundOf16.length > 0) {
+      setGroupId("roundOf16");
+      return knockoutStages.roundOf16;
+    }
+    if (
+      knockoutStages?.quarterFinals &&
+      knockoutStages.quarterFinals.length > 0
+    ) {
+      setGroupId("quarterFinals");
+      return knockoutStages.quarterFinals;
+    }
+    return [];
+  }, [knockoutStages]);
 
   const handleChangeMatchName = (
     matchIdx: number,
     newName: string,
     isHome: boolean
   ) => {
-    setEditedMatches((prev) =>
+    setIsEdited(true);
+    setKnockoutMatches((prev) =>
       prev.map((match, idx) =>
         idx === matchIdx
           ? { ...match, [isHome ? "home" : "away"]: newName }
@@ -44,55 +60,49 @@ const EditKnockout = ({ tournamentData }: EditKnockoutProps) => {
   };
 
   const saveChanges = () => {
-    if (editedMatches.length === 0) {
-      toast.warning("No matches to update");
+    const tournament: TournamentDataType = getTournamentData(slug);
+
+    if (!tournament) {
+      toast.error("Tournament data not found");
       return;
     }
 
-    // Determine which stage we're editing
-    let stageKey: keyof typeof knockoutStages = "quarterFinals";
-    if (knockoutStages?.roundOf32?.length) stageKey = "roundOf32";
-    else if (knockoutStages?.roundOf16?.length) stageKey = "roundOf16";
-    else if (knockoutStages?.semiFinals?.length) stageKey = "semiFinals";
-    else if (knockoutStages?.finals?.length) stageKey = "finals";
-
-    // Create updated knockout stages
-    const updatedKnockoutStages = {
-      ...knockoutStages,
-      [stageKey]: editedMatches.map((match, idx) => ({
-        ...knockoutArr[idx], // Preserve other match properties
-        home: match.home,
-        away: match.away,
-      })),
-    };
-
-    // Update the tournament data
-    const updatedTournament = {
-      ...tournamentData,
-      knockoutStages: updatedKnockoutStages,
+    const updateKnockoutMatches = {
+      ...tournament,
+      knockoutStages: {
+        ...tournament.knockoutStages,
+        [groupId]: knockoutMatches,
+      },
       updatedAt: new Date().toISOString(),
     };
 
-    // Save to localStorage
-    // localStorage.setItem(
-    //   `tourney-master-${slug}`,
-    //   JSON.stringify(updatedTournament)
-    // );
-
-    // Update state
-    // setTournamentData(updatedTournament);
-    // toast.success("Knockout matches updated successfully!");
+    localStorage.setItem(
+      `tourney-master-${slug}`,
+      JSON.stringify(updateKnockoutMatches)
+    );
+    setTournaments((prev) =>
+      prev.map((tournament) =>
+        tournament.slug === slug ? updateKnockoutMatches : tournament
+      )
+    );
+    setOriginalTournamentList((prev) =>
+      prev.map((tournament) =>
+        tournament.slug === slug ? updateKnockoutMatches : tournament
+      )
+    );
+    onClose();
+    toast.success("Changes saved successfully!");
   };
 
   React.useEffect(() => {
-    setEditedMatches(knockoutArr);
-  }, [knockoutArr]);
+    setKnockoutMatches(knockoutFirstStage);
+  }, [knockoutFirstStage]);
 
   return (
     <div className="w-full flex flex-col gap-y-4 mt-10">
-      {knockoutArr.map((match, idx) => {
-        const homeName = editedMatches[idx]?.home || match.home || "";
-        const awayName = editedMatches[idx]?.away || match.away || "";
+      {knockoutMatches.map((match, idx) => {
+        const homeName = match.home || match.home || "";
+        const awayName = match.away || match.away || "";
 
         return (
           <div key={idx} className="flex items-center gap-x-4">
@@ -118,7 +128,11 @@ const EditKnockout = ({ tournamentData }: EditKnockoutProps) => {
       })}
 
       <div className="flex items-center justify-end mt-2">
-        <Button className="bg-emerald-700 text-white px-4 py-2">
+        <Button
+          disabled={!isEdited}
+          className="bg-emerald-700 text-white px-4 py-2 hover:bg-emerald-600 duration-300"
+          onClick={saveChanges}
+        >
           Save Changes
         </Button>
       </div>

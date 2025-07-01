@@ -5,11 +5,7 @@ import TourneyMasterLogo from "@/components/general/TourneyMasterLogo";
 import { Button } from "@/components/ui/button";
 import TableList from "./TableList";
 import { TournamentDataType } from "@/types/tournament.type";
-import {
-  getAndSortTournaments,
-  getItemsStartingWith,
-  sortByDate,
-} from "@/lib/utils";
+import { getAndSortTournaments } from "@/lib/utils";
 import GoBack from "@/components/general/GoBack";
 import Link from "next/link";
 import { useTournaments } from "@/context/Tournament.context";

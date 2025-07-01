@@ -5,8 +5,6 @@ import { Button } from "@/components/ui/button";
 import {
   EditNamesType,
   groupType,
-  MatchFixture,
-  PlayerStats,
   TournamentDataType,
 } from "@/types/tournament.type";
 import { Input } from "@/components/ui/input";
