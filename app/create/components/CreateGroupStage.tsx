@@ -59,7 +59,7 @@ const CreateGroupStage = ({
             value={formData.qualifier}
             onChange={handleChange}
             type="number"
-            min="2"
+            min="1"
             className="uppercase appearance-none border-dark-300 h-12 md:h-14 text-white placeholder:text-gray-300 px-5"
           />
         </div>
