@@ -48,7 +48,7 @@ const BracketRound = ({
   return (
     <div
       className={cn(
-        "flex flex-col gap-y-4 h-[68vh] justify-between py-5",
+        "flex flex-col gap-y-4 justify-between py-5 bg",
         className
       )}
     >
