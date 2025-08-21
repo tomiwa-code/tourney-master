@@ -47,6 +47,7 @@ const BracketConnections = ({
         previousRound={roundOf16}
         previousRoundType={"roundOf16"}
         bracketLength={8}
+        isRoundOf16
         isDisabled={knockoutStatus}
       />
 
