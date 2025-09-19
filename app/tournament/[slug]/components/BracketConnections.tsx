@@ -33,12 +33,29 @@ const BracketConnections = ({
   knockoutStatus,
   matchResults,
 }: BracketConnectionsProps) => {
-  const { quarterFinals, semiFinals, finals, roundOf16 } = KnockoutStages;
+  const { quarterFinals, semiFinals, finals, roundOf16, roundOf32 } =
+    KnockoutStages;
   const tournamentWinner =
     finals !== undefined && finals[0]?.winner ? finals[0].winner : "";
 
+  const isRoundOf32 = roundOf32 && roundOf32.length > 0;
+
   return (
     <>
+      {isRoundOf32 && (
+        <BracketRound
+          matchResults={matchResults}
+          currentRound={quarterFinals}
+          getWinner={getWinner}
+          handleScoreChange={handleScoreChange}
+          previousRound={roundOf32}
+          previousRoundType={"roundOf32"}
+          bracketLength={16}
+          isRoundOf16
+          isDisabled={knockoutStatus}
+        />
+      )}
+
       <BracketRound
         matchResults={matchResults}
         currentRound={quarterFinals}
@@ -46,6 +63,8 @@ const BracketConnections = ({
         handleScoreChange={handleScoreChange}
         previousRound={roundOf16}
         previousRoundType={"roundOf16"}
+        className={isRoundOf32 ? "ml-[60] py-16" : ""}
+        bracketLineClass={isRoundOf32 ? "h-[185px]" : ""}
         bracketLength={8}
         isRoundOf16
         isDisabled={knockoutStatus}
@@ -59,8 +78,9 @@ const BracketConnections = ({
         previousRound={quarterFinals}
         previousRoundType={"quarterFinals"}
         bracketLength={4}
-        className="ml-[60] py-16"
-        bracketLineClass="h-[185px]"
+        className={`ml-[60] ${isRoundOf32 ? "pt-[150px] pb-[155px]" : "py-16"}`}
+        bracketLineClass={isRoundOf32 ? "h-[360px]" : "h-[185px]"}
+        isRoundOf16={isRoundOf32 ? true : false}
         isDisabled={knockoutStatus}
       />
 
@@ -72,9 +92,12 @@ const BracketConnections = ({
         previousRound={semiFinals}
         previousRoundType={"semiFinals"}
         bracketLength={2}
-        className="ml-[60] pt-[150px] pb-[155px]"
-        bracketLineClass="h-[355px] bottom-4"
+        className={`ml-[60] ${
+          isRoundOf32 ? "pt-[325px] pb-[330px]" : "pt-[150px] pb-[155px]"
+        }`}
+        bracketLineClass={isRoundOf32 ? "h-[710px]" : "h-[355px] bottom-4"}
         isDisabled={knockoutStatus}
+        isRoundOf16={isRoundOf32 ? true : false}
         isFinal
       />
 
