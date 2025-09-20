@@ -108,10 +108,11 @@ const KnockoutStage = ({
     if (!match) return;
 
     const splitId = editingMatchId.matchId.split("-");
-    const roundKey = splitId.includes("16")
-      ? "roundOf16"
-      : splitId.includes("32")
+
+    const roundKey = splitId.includes("32")
       ? "roundOf32"
+      : splitId.includes("16")
+      ? "roundOf16"
       : splitId.includes("quarter") || splitId.includes("Quarter")
       ? "quarterFinals"
       : splitId.includes("semi") || splitId.includes("Semi")
