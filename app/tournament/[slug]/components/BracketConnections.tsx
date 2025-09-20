@@ -45,7 +45,7 @@ const BracketConnections = ({
       {isRoundOf32 && (
         <BracketRound
           matchResults={matchResults}
-          currentRound={quarterFinals}
+          currentRound={roundOf16}
           getWinner={getWinner}
           handleScoreChange={handleScoreChange}
           previousRound={roundOf32}
