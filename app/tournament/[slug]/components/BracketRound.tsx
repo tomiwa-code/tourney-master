@@ -22,7 +22,6 @@ interface BracketRoundProps {
   bracketLength: number;
   isFinal?: boolean;
   isDisabled: boolean;
-  isRoundOf16?: boolean;
   handleScoreChange: (
     e: React.ChangeEvent<HTMLInputElement>,
     matchId: string,
@@ -43,17 +42,12 @@ const BracketRound = ({
   bracketLength,
   isFinal,
   isDisabled,
-  isRoundOf16 = false,
 }: BracketRoundProps) => {
   const previousRoundIsEmpty = previousRound.length === 0;
 
   return (
     <div
-      className={cn(
-        "flex flex-col gap-y-4 justify-between py-5",
-        className,
-        !isRoundOf16 && "h-[71vh]"
-      )}
+      className={cn("flex flex-col gap-y-4 justify-between py-5", className)}
     >
       {Array.from({ length: bracketLength }).map((_, idx) => {
         const winnerMatch = getWinner(

@@ -8,6 +8,7 @@ import {
   RoundsType,
 } from "@/types/tournament.type";
 import BracketRound from "./BracketRound";
+import { cn } from "@/lib/utils";
 
 interface BracketConnectionsProps {
   matchResults: MatchResultsType;
@@ -39,6 +40,8 @@ const BracketConnections = ({
     finals !== undefined && finals[0]?.winner ? finals[0].winner : "";
 
   const isRoundOf32 = roundOf32 && roundOf32.length > 0;
+  const isQuarterFinal =
+    !isRoundOf32 && roundOf16.length === 0 && quarterFinals.length > 0;
 
   return (
     <>
@@ -51,7 +54,6 @@ const BracketConnections = ({
           previousRound={roundOf32}
           previousRoundType={"roundOf32"}
           bracketLength={16}
-          isRoundOf16
           isDisabled={knockoutStatus}
         />
       )}
@@ -64,9 +66,10 @@ const BracketConnections = ({
         previousRound={roundOf16}
         previousRoundType={"roundOf16"}
         className={isRoundOf32 ? "ml-[60] py-16" : ""}
-        bracketLineClass={isRoundOf32 ? "h-[185px]" : ""}
+        bracketLineClass={
+          isRoundOf32 ? "h-[185px]" : isQuarterFinal ? "h-[53px]" : ""
+        }
         bracketLength={8}
-        isRoundOf16
         isDisabled={knockoutStatus}
       />
 
@@ -78,9 +81,16 @@ const BracketConnections = ({
         previousRound={quarterFinals}
         previousRoundType={"quarterFinals"}
         bracketLength={4}
-        className={`ml-[60] ${isRoundOf32 ? "pt-[150px] pb-[155px]" : "py-16"}`}
-        bracketLineClass={isRoundOf32 ? "h-[360px]" : "h-[185px]"}
-        isRoundOf16={isRoundOf32 ? true : false}
+        className={`ml-[60] ${
+          isRoundOf32
+            ? "pt-[150px] pb-[155px]"
+            : isQuarterFinal
+            ? "py-12 -my-1"
+            : "py-16"
+        }`}
+        bracketLineClass={
+          isRoundOf32 ? "h-[360px]" : isQuarterFinal ? "h-[100px]" : "h-[185px]"
+        }
         isDisabled={knockoutStatus}
       />
 
@@ -93,15 +103,24 @@ const BracketConnections = ({
         previousRoundType={"semiFinals"}
         bracketLength={2}
         className={`ml-[60] ${
-          isRoundOf32 ? "pt-[325px] pb-[330px]" : "pt-[150px] pb-[155px]"
+          isRoundOf32
+            ? "pt-[325px] pb-[330px]"
+            : isQuarterFinal
+            ? "py-20 my-3"
+            : "pt-[150px] pb-[155px]"
         }`}
-        bracketLineClass={isRoundOf32 ? "h-[710px]" : "h-[355px] bottom-4"}
+        bracketLineClass={
+          isRoundOf32
+            ? "h-[710px]"
+            : isQuarterFinal
+            ? "h-[195px]"
+            : "h-[355px] bottom-4"
+        }
         isDisabled={knockoutStatus}
-        isRoundOf16={isRoundOf32 ? true : false}
         isFinal
       />
 
-      <WinnerCard winner={tournamentWinner} />
+      <WinnerCard winner={tournamentWinner} className={isRoundOf32 ? "mt-2" : isQuarterFinal ? "mt-3" : ""} />
     </>
   );
 };
@@ -109,8 +128,19 @@ const BracketConnections = ({
 export default BracketConnections;
 
 // Winner card component
-const WinnerCard = ({ winner }: { winner: string }) => (
-  <div className="relative flex items-center ml-14 justify-center pb-3">
+const WinnerCard = ({
+  winner,
+  className,
+}: {
+  winner: string;
+  className?: string;
+}) => (
+  <div
+    className={cn(
+      "relative flex items-center ml-14 justify-center pb-3",
+      className
+    )}
+  >
     <div className="relative">
       <div className="absolute -top-8">
         <h2 className="uppercase font-extrabold text-primary text-lg">
