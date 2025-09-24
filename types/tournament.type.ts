@@ -3,6 +3,7 @@ export type groupType = {
 };
 
 export type DistributionMethod = "random" | "custom";
+export type FixtureType = "single-round" | "home-and-away";
 
 export type KnockoutStages = {
   roundOf32?: KnockoutMatch[];
@@ -20,6 +21,7 @@ export type TournamentDataType = {
   groupFixtures: GroupFixtures;
   groupStandings: GroupStandings;
   distribution: DistributionMethod;
+  fixtureType: FixtureType;
   status: "group-stage" | "knockout" | "completed";
   playersPerGroup: string;
   totalPlayer: string;
@@ -64,6 +66,7 @@ export type MatchFixture = {
   players: [string, string]; // [homePlayer, awayPlayer]
   result: MatchResult;
   round?: number; // Useful for tracking group stage rounds
+  leg: string;
 };
 
 export type GroupStandings = Record<string, PlayerStats[]>;
@@ -133,6 +136,7 @@ export type CreateTournamentFormDataType = {
   playersPerGroup: string;
   playerNames: string;
   distribution: DistributionMethod;
+  fixtureType: FixtureType;
   playerInput: string;
   qualifier: string;
   gameType: string;

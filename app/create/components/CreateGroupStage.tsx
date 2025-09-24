@@ -17,6 +17,16 @@ interface CreateGroupStageProps {
 }
 
 const radioOptions = ["random", "custom"];
+const fixtureOptions = [
+  {
+    label: "single round",
+    value: "single-round",
+  },
+  {
+    label: "home & away",
+    value: "home-and-away",
+  },
+];
 
 const CreateGroupStage = ({
   formData,
@@ -65,22 +75,45 @@ const CreateGroupStage = ({
         </div>
       </div>
 
-      <div className="flex flex-col gap-y-4 w-full ">
-        <CreateLabel text="player distribution" />
-        <RadioGroup
-          value={formData.distribution}
-          onValueChange={(value) => handleSelectChange("distribution", value)}
-          className="flex items-center gap-x-4"
-        >
-          {radioOptions.map((option, idx) => (
-            <div className="flex items-center space-x-2" key={idx}>
-              <RadioGroupItem value={option} id={option} />
-              <Label htmlFor={option} className="text-gray-300 capitalize">
-                {option}
-              </Label>
-            </div>
-          ))}
-        </RadioGroup>
+      <div className="flex items-center gap-x-3 w-full">
+        <div className="flex-1 flex flex-col gap-y-4 w-full ">
+          <CreateLabel text="player distribution" />
+          <RadioGroup
+            value={formData.distribution}
+            onValueChange={(value) => handleSelectChange("distribution", value)}
+            className="flex items-center gap-x-4"
+          >
+            {radioOptions.map((option, idx) => (
+              <div className="flex items-center space-x-2" key={idx}>
+                <RadioGroupItem value={option} id={option} />
+                <Label htmlFor={option} className="text-gray-300 capitalize">
+                  {option}
+                </Label>
+              </div>
+            ))}
+          </RadioGroup>
+        </div>
+
+        <div className="flex-1 flex flex-col gap-y-4">
+          <CreateLabel text="Fixture type" />
+          <RadioGroup
+            value={formData.fixtureType}
+            onValueChange={(value) => handleSelectChange("fixtureType", value)}
+            className="flex items-center gap-x-4"
+          >
+            {fixtureOptions.map((option, idx) => (
+              <div className="flex items-center space-x-2" key={idx}>
+                <RadioGroupItem value={option.value} id={option.value} />
+                <Label
+                  htmlFor={option.label}
+                  className="text-gray-300 capitalize"
+                >
+                  {option.label}
+                </Label>
+              </div>
+            ))}
+          </RadioGroup>
+        </div>
       </div>
 
       {formData.distribution === "random" && (

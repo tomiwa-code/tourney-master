@@ -2,6 +2,7 @@ import {
   CheckGroupStageCompletionRes,
   DistributionMethod,
   EditNamesType,
+  FixtureType,
   GroupFixtures,
   GroupStandings,
   groupType,
@@ -110,29 +111,50 @@ const parseCustomDistribution = (
 };
 
 export const generateGroupFixtures = (
-  groups: Record<string, string[]>
+  groups: Record<string, string[]>,
+  fixtureType: FixtureType = "single-round"
 ): GroupFixtures => {
   const fixtures: GroupFixtures = {};
 
   for (const [groupName, players] of Object.entries(groups)) {
-    fixtures[groupName] = generateRoundRobinFixtures(players);
+    fixtures[groupName] = generateRoundRobinFixtures(players, fixtureType);
   }
 
   return fixtures;
 };
 
-const generateRoundRobinFixtures = (players: string[]): MatchFixture[] => {
+const generateRoundRobinFixtures = (
+  players: string[],
+  fixtureType: FixtureType = "single-round"
+): MatchFixture[] => {
   const fixtures: MatchFixture[] = [];
   const playerCount = players.length;
   const participants =
     playerCount % 2 === 0 ? [...players] : [...players, "BYE"];
   const half = participants.length / 2;
-  const rounds = participants.length - 1;
+  const roundsPerLeg = participants.length - 1;
+  const totalRounds =
+    fixtureType === "home-and-away" ? roundsPerLeg * 2 : roundsPerLeg;
 
-  for (let round = 0; round < rounds; round++) {
+  const participantsCopy = [...participants];
+
+  for (let round = 0; round < totalRounds; round++) {
+    const currentLeg = round < roundsPerLeg ? "first" : "second";
+
     for (let i = 0; i < half; i++) {
-      const homePlayer = participants[i];
-      const awayPlayer = participants[participants.length - 1 - i];
+      const homeIndex = i;
+      const awayIndex = participantsCopy.length - 1 - i;
+
+      let homePlayer, awayPlayer;
+
+      if (currentLeg === "first") {
+        homePlayer = participantsCopy[homeIndex];
+        awayPlayer = participantsCopy[awayIndex];
+      } else {
+        // Second leg: reverse the fixture (home becomes away, away becomes home)
+        homePlayer = participantsCopy[awayIndex];
+        awayPlayer = participantsCopy[homeIndex];
+      }
 
       if (homePlayer !== "BYE" && awayPlayer !== "BYE") {
         fixtures.push({
@@ -143,14 +165,49 @@ const generateRoundRobinFixtures = (players: string[]): MatchFixture[] => {
             completed: false,
           },
           round: round + 1,
+          leg: currentLeg, // This indicates whether it's first or second leg
         });
       }
     }
-    participants.splice(1, 0, participants.pop()!);
+
+    // Rotate participants for next round (standard round-robin rotation)
+    participantsCopy.splice(1, 0, participantsCopy.pop()!);
   }
 
   return fixtures;
 };
+
+// SAFE KEEPING THIS CODE HERE FOR REFERENCE LATER 
+// const generateRoundRobinFixtures = (players: string[]): MatchFixture[] => {
+//   const fixtures: MatchFixture[] = [];
+//   const playerCount = players.length;
+//   const participants =
+//     playerCount % 2 === 0 ? [...players] : [...players, "BYE"];
+//   const half = participants.length / 2;
+//   const rounds = participants.length - 1;
+
+//   for (let round = 0; round < rounds; round++) {
+//     for (let i = 0; i < half; i++) {
+//       const homePlayer = participants[i];
+//       const awayPlayer = participants[participants.length - 1 - i];
+
+//       if (homePlayer !== "BYE" && awayPlayer !== "BYE") {
+//         fixtures.push({
+//           players: [homePlayer, awayPlayer],
+//           result: {
+//             homeScore: null,
+//             awayScore: null,
+//             completed: false,
+//           },
+//           round: round + 1,
+//         });
+//       }
+//     }
+//     participants.splice(1, 0, participants.pop()!);
+//   }
+
+//   return fixtures;
+// };
 
 export const calculateDerivedStats = (player: PlayerStats): PlayerStats => {
   const mp = player.matches.length;

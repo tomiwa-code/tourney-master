@@ -34,6 +34,7 @@ const CreateWrapper = () => {
     playerInput: "",
     qualifier: "4",
     distribution: "random", // 'random' or 'custom'
+    fixtureType: "single-round", // "single-round" or "home-and-away"
     knockoutType: "round-of-16", // 'round-of-16', 'round-of-32', etc.
     knockoutPlayerNames: "",
   });
@@ -69,6 +70,7 @@ const CreateWrapper = () => {
       distribution,
       playerInput,
       qualifier,
+      fixtureType,
     } = formData;
 
     const isCustomDistribution = distribution === "custom";
@@ -103,7 +105,10 @@ const CreateWrapper = () => {
       );
 
       // GENERATE FIXTURES FOR EACH GROUP
-      const groupFixtures = generateGroupFixtures(groups);
+      const groupFixtures =
+        fixtureType === "single-round"
+          ? generateGroupFixtures(groups)
+          : generateGroupFixtures(groups, "home-and-away");
 
       // INITIALIZE STANDINGS FOR EACH GROUP
       const groupStandings = initializeStandings(groups);
@@ -135,6 +140,7 @@ const CreateWrapper = () => {
         groupFixtures,
         groupStandings,
         distribution,
+        fixtureType,
         totalPlayer: maxPlayers,
         playersPerGroup,
         createdAt: new Date().toISOString(),
