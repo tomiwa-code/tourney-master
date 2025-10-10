@@ -3,6 +3,7 @@ import React from "react";
 
 import { Button } from "@/components/ui/button";
 import {
+  // backupFixtures,
   checkGroupStageCompletion,
   cn,
   drawKnockoutRound,
@@ -21,6 +22,7 @@ import { toast } from "sonner";
 import KnockoutStage from "./KnockoutStage";
 import { Dialog } from "@/components/ui/dialog";
 import DrawKnockoutModal from "./DrawKnockoutModal";
+// import PasteFixturesScoreModal from "./PasteFixturesScoreModal";
 
 const tabArr = ["groups", "fixtures", "knockout"];
 const DynamicPageWrapper = ({ slug }: { slug: string }) => {
@@ -29,6 +31,7 @@ const DynamicPageWrapper = ({ slug }: { slug: string }) => {
     React.useState<TournamentDataType | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [openModal, setOpenModal] = React.useState(false);
+  // const [openPasteModal, setOpenPasteModal] = React.useState(false);
 
   // CHECK GROUP STAGE COMPLETION
   const completionStatus: CheckGroupStageCompletionRes = React.useMemo(() => {
@@ -65,7 +68,10 @@ const DynamicPageWrapper = ({ slug }: { slug: string }) => {
     );
 
     try {
-      const knockoutDrawn = drawKnockoutRound(qualifiers, 2);
+      const knockoutDrawn = drawKnockoutRound(
+        qualifiers,
+        tournamentData.numOfQualifier
+      );
       if (!knockoutDrawn) {
         toast.error("Failed to draw knockout round");
         return;
@@ -106,6 +112,10 @@ const DynamicPageWrapper = ({ slug }: { slug: string }) => {
       toast.error(`${err}`);
     }
   }, [tournamentData, completionStatus, slug]);
+
+  // const copyFixtures = React.useCallback(async () => {
+  //   await backupFixtures(slug);
+  // }, []);
 
   // FETCH TOURNAMENT DATA
   React.useEffect(() => {
@@ -217,20 +227,38 @@ const DynamicPageWrapper = ({ slug }: { slug: string }) => {
               )}
 
               {activeTab === "fixtures" && (
-                <div className="grid gap-y-10 lg:grid-cols-2 gap-x-16">
-                  {Object.entries(tournamentData.groupFixtures).map(
-                    ([group, teams]) => {
-                      return (
-                        <Fixtures
-                          key={group}
-                          group={group}
-                          slug={slug}
-                          teams={teams}
-                          isKnockoutRound={tournamentData.knockoutDrawn}
-                        />
-                      );
-                    }
-                  )}
+                <div className="flex flex-col gap-y-5">
+                  {/* <div className="flex items-center gap-x-4 justify-center -mt-8">
+                    <Button
+                      className="text-red-500 capitalize font-semibold rounded-md"
+                      onClick={copyFixtures}
+                    >
+                      copy fixture score
+                    </Button>
+
+                    <Button
+                      className="capitalize font-medium bg-dark-300 text-white rounded-md hover:bg-dark-400"
+                      onClick={() => setOpenPasteModal(true)}
+                    >
+                      paste fixture score
+                    </Button>
+                  </div> */}
+
+                  <div className="grid gap-y-10 lg:grid-cols-2 gap-x-16">
+                    {Object.entries(tournamentData.groupFixtures).map(
+                      ([group, teams]) => {
+                        return (
+                          <Fixtures
+                            key={group}
+                            group={group}
+                            slug={slug}
+                            teams={teams}
+                            isKnockoutRound={tournamentData.knockoutDrawn}
+                          />
+                        );
+                      }
+                    )}
+                  </div>
                 </div>
               )}
 
@@ -268,6 +296,13 @@ const DynamicPageWrapper = ({ slug }: { slug: string }) => {
           drawKnockout={generateKnockout}
         />
       </Dialog>
+
+      {/* <Dialog open={openPasteModal} onOpenChange={setOpenPasteModal}>
+        <PasteFixturesScoreModal
+          onClose={() => setOpenPasteModal(false)}
+          slug={slug}
+        />
+      </Dialog> */}
     </div>
   );
 };

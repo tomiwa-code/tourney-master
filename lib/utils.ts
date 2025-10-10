@@ -177,7 +177,7 @@ const generateRoundRobinFixtures = (
   return fixtures;
 };
 
-// SAFE KEEPING THIS CODE HERE FOR REFERENCE LATER 
+// SAFE KEEPING THIS CODE HERE FOR REFERENCE LATER
 // const generateRoundRobinFixtures = (players: string[]): MatchFixture[] => {
 //   const fixtures: MatchFixture[] = [];
 //   const playerCount = players.length;
@@ -1248,4 +1248,87 @@ export const drawKnockoutBracket = (players: string[]) => {
     ...knockoutStages,
     knockoutDrawn: true,
   };
+};
+
+export const backupFixtures = async (slug: string) => {
+  try {
+    const tournamentData = getTournamentData(slug);
+
+    // Create backup object with group fixtures
+    const fixturesBackup = JSON.parse(
+      JSON.stringify(tournamentData.groupFixtures)
+    );
+
+    const copyData = await copyToClipboard(JSON.stringify(fixturesBackup));
+
+    if (copyData) {
+      toast.success("Fixtures copied to clipboard!");
+    } else {
+      toast.error("Failed to copy fixtures score to clipboard.");
+    }
+  } catch (error) {
+    toast.error("Error backing up fixtures: " + error);
+  }
+};
+
+export const restoreFixtures = (slug: string, copyData: string) => {
+  try {
+    if (!copyData) {
+      console.error("No backup available");
+      return false;
+    }
+
+    // Get current tournament data
+    const tournamentData = getTournamentData(slug);
+
+    // Replace group fixtures with backup
+    tournamentData.groupFixtures = JSON.parse(copyData);
+
+    // Update the timestamp
+    tournamentData.updatedAt = new Date().toISOString();
+
+    // Save back to localStorage
+    localStorage.setItem(
+      `tourney-master-${slug}`,
+      JSON.stringify(tournamentData)
+    );
+    return true;
+  } catch (error) {
+    console.error("Error restoring fixtures:", error);
+    return false;
+  }
+};
+
+export const copyToClipboard = async (text: string) => {
+  if (text === undefined || text === null) {
+    return false;
+  }
+
+  if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch (err) {
+      console.warn("navigator.clipboard error:", err);
+    }
+  }
+
+  try {
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "absolute";
+    textarea.style.left = "-9999px";
+    document.body.appendChild(textarea);
+    textarea.select();
+    textarea.setSelectionRange(0, textarea.value.length);
+
+    const ok = document.execCommand("copy");
+    document.body.removeChild(textarea);
+
+    return ok ? true : false;
+  } catch (err) {
+    console.error("Fallback: Oops, unable to copy", err);
+    return false;
+  }
 };
