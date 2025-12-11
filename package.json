@@ -19,7 +19,7 @@
     "clsx": "^2.1.1",
     "lucide-react": "^0.522.0",
     "motion": "^12.18.1",
-    "next": "15.3.4",
+    "next": "15.3.6",
     "nextjs-toploader": "^3.8.16",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
